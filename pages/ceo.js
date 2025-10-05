@@ -1,6 +1,6 @@
 // pages/ceo.js
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import supabase from '../lib/supabaseClient'
 
@@ -10,114 +10,121 @@ export default function CeoDashboard() {
   const [company, setCompany] = useState(null)
   const [user, setUser] = useState(null)
   const [stats, setStats] = useState({ present: 0, late: 0, leave: 0, visit: 0 })
+  const [debugVisible, setDebugVisible] = useState(true) // show debug panel on-page
+  const ownedCompanyIdsRef = useRef([])
   const router = useRouter()
 
   useEffect(() => {
     let statusChannel = null
     let joinChannel = null
+    let mounted = true
 
     const loadData = async () => {
-      const { data: userData } = await supabase.auth.getUser()
-      const currentUser = userData?.user
+      // robust user detection: try getUser(), then fallback to getSession()
+      let currentUser = null
+      try {
+        const { data: u } = await supabase.auth.getUser()
+        currentUser = u?.user || null
+      } catch (e) {
+        console.debug('getUser() threw', e)
+      }
+
       if (!currentUser) {
-        console.debug('No current user')
+        try {
+          const { data: s } = await supabase.auth.getSession()
+          currentUser = s?.session?.user || null
+        } catch (e) {
+          console.debug('getSession() threw', e)
+        }
+      }
+
+      if (!currentUser) {
+        console.debug('No authenticated user (after both checks).')
+        setUser(null)
+        setCompany(null)
+        setRequests([])
         return
       }
+
+      console.debug('Authenticated user found:', currentUser)
       setUser(currentUser)
-      console.debug('ceo loadData currentUser:', currentUser.id)
 
-      // Try to find any company this user owns (first company)
-      const { data: ownedCompany } = await supabase
+      // 1) fetch all companies owned by this user
+      const { data: ownedCompanies, error: ownedErr } = await supabase
         .from('corp_companies')
-        .select('*')
+        .select('id, name, code, owner_id')
         .eq('owner_id', currentUser.id)
-        .maybeSingle()
 
-      // Also fetch join requests **for companies where this user is owner**
-      // This query uses an inner join on corp_companies.owner_id so it will return
-      // any join requests to companies where you are the owner.
-      const { data: joinRequests, error: jrErr } = await supabase
-        .from('corp_join_requests')
-        .select(`
-          id, user_id, company_id, message, created_at,
-          corp_profiles(id, full_name, email),
-          corp_companies(id, name, owner_id)
-        `)
-        .eq('corp_companies.owner_id', currentUser.id)
-        .order('created_at', { ascending: false })
+      if (ownedErr) console.error('Error fetching owned companies', ownedErr)
+      const ownedIds = (ownedCompanies || []).map(c => c.id)
+      ownedCompanyIdsRef.current = ownedIds
+      console.debug('Owned companies:', ownedCompanies)
 
-      if (jrErr) console.error('joinRequests fetch error', jrErr)
-      else setRequests(joinRequests || [])
-
-      // If we found an ownedCompany, set it and fetch feed & stats for it
-      if (ownedCompany) {
-        setCompany(ownedCompany)
-        await fetchFeed(ownedCompany.id)
-        await fetchStats(ownedCompany.id)
+      // choose first company for UI if present
+      if (mounted && ownedCompanies && ownedCompanies.length > 0) {
+        setCompany(ownedCompanies[0])
+        await fetchFeed(ownedCompanies[0].id)
+        await fetchStats(ownedCompanies[0].id)
       } else {
-        console.debug('No owned company found for user', currentUser.id)
+        setCompany(null)
+        setFeed([])
+        setStats({ present: 0, late: 0, leave: 0, visit: 0 })
       }
 
-      // set up realtime channels
+      // 2) fetch join requests for all owned company IDs using .in()
+      if (ownedIds.length > 0) {
+        await fetchRequestsForCompanyIds(ownedIds)
+      } else {
+        setRequests([])
+      }
+
+      // setup realtime channels (status + join requests)
       statusChannel = supabase
         .channel('public:corp_statuses')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'corp_statuses' },
-          (payload) => {
-            // If we own the company for which this status was posted, add to feed
-            if (payload.new && payload.new.company_id && (ownedCompany?.id === payload.new.company_id)) {
-              setFeed(f => [payload.new, ...f])
-              fetchStats(payload.new.company_id)
-            }
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'corp_statuses' }, payload => {
+          const newRow = payload?.new
+          if (!newRow) return
+          if (ownedCompanyIdsRef.current.includes(newRow.company_id)) {
+            setFeed(f => [newRow, ...f])
+            fetchStats(newRow.company_id)
           }
-        )
+        })
         .subscribe()
 
       joinChannel = supabase
         .channel('public:corp_join_requests')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'corp_join_requests' },
-          (payload) => {
-            // If this join request is for a company owned by me, refresh requests list
-            if (payload.new && payload.new.company_id) {
-              // quick check: if we know ownedCompany and ids match, refresh; else refresh by owner join
-              if (ownedCompany && ownedCompany.id === payload.new.company_id) {
-                // append new request (we'll re-fetch full list for safety)
-                fetchRequestsForOwner(currentUser.id)
-              } else {
-                // still attempt to refresh by owner join (this handles multi-company owners)
-                fetchRequestsForOwner(currentUser.id)
-              }
-            }
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'corp_join_requests' }, payload => {
+          const newRow = payload?.new
+          if (!newRow) return
+          if (ownedCompanyIdsRef.current.includes(newRow.company_id)) {
+            fetchRequestsForCompanyIds(ownedCompanyIdsRef.current)
           }
-        )
-        .on(
-          'postgres_changes',
-          { event: 'DELETE', schema: 'public', table: 'corp_join_requests' },
-          (payload) => {
-            if (payload.old && payload.old.company_id && ownedCompany && ownedCompany.id === payload.old.company_id) {
-              setRequests(r => r.filter(x => x.id !== payload.old.id))
-            } else {
-              // ensure the requests list is current
-              if (user) fetchRequestsForOwner(user.id)
-            }
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'corp_join_requests' }, payload => {
+          const oldRow = payload?.old
+          if (!oldRow) return
+          if (ownedCompanyIdsRef.current.includes(oldRow.company_id)) {
+            setRequests(r => r.filter(x => x.id !== oldRow.id))
           }
-        )
+        })
         .subscribe()
     }
 
     loadData()
 
     return () => {
-      try { statusChannel?.unsubscribe() } catch (e) { /* ignore */ }
-      try { joinChannel?.unsubscribe() } catch (e) { /* ignore */ }
+      mounted = false
+      try { statusChannel?.unsubscribe() } catch (e) {}
+      try { joinChannel?.unsubscribe() } catch (e) {}
     }
   }, [])
 
-  // helper: fetch join requests by owner id (joins corp_companies.owner_id)
-  const fetchRequestsForOwner = async (ownerId) => {
+  // fetch join requests for multiple company IDs
+  const fetchRequestsForCompanyIds = async (companyIds = []) => {
+    if (!companyIds || companyIds.length === 0) {
+      setRequests([])
+      return
+    }
     const { data, error } = await supabase
       .from('corp_join_requests')
       .select(`
@@ -125,52 +132,52 @@ export default function CeoDashboard() {
         corp_profiles(id, full_name, email),
         corp_companies(id, name, owner_id)
       `)
-      .eq('corp_companies.owner_id', ownerId)
+      .in('company_id', companyIds)
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('fetchRequestsForOwner error', error)
+      console.error('fetchRequestsForCompanyIds error', error)
+      setRequests([])
       return
     }
-    setRequests(data || [])
-  }
-
-  // fallback fetchRequests when we already have a company id
-  const fetchRequests = async (companyId) => {
-    const { data } = await supabase
-      .from('corp_join_requests')
-      .select(`
-        id, user_id, company_id, message, created_at,
-        corp_profiles(id, full_name, email),
-        corp_companies(id, name, owner_id)
-      `)
-      .eq('company_id', companyId)
-      .order('created_at', { ascending: false })
+    console.debug('Fetched join requests:', data)
     setRequests(data || [])
   }
 
   const fetchFeed = async (companyId) => {
-    const { data: feedData } = await supabase
+    if (!companyId) {
+      setFeed([])
+      return
+    }
+    const { data: feedData, error } = await supabase
       .from('corp_statuses')
       .select('*, corp_profiles!inner(id, full_name)')
       .eq('company_id', companyId)
       .order('timestamp', { ascending: false })
       .limit(50)
+    if (error) console.error('fetchFeed error', error)
     setFeed(feedData || [])
   }
 
   const fetchStats = async (companyId) => {
+    if (!companyId) {
+      setStats({ present: 0, late: 0, leave: 0, visit: 0 })
+      return
+    }
     const today = new Date()
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('corp_statuses')
       .select('type')
       .eq('company_id', companyId)
       .gte('timestamp', startOfDay)
 
-    if (!data) return
+    if (error) {
+      console.error('fetchStats error', error)
+      return
+    }
     const counts = { present: 0, late: 0, leave: 0, visit: 0 }
-    data.forEach((s) => {
+    (data || []).forEach((s) => {
       if (counts[s.type] !== undefined) counts[s.type]++
     })
     setStats(counts)
@@ -209,10 +216,14 @@ export default function CeoDashboard() {
         <button onClick={logout} className="text-sm px-3 py-1 border rounded">Logout</button>
       </div>
 
-      {company && (
+      {company ? (
         <div className="mb-6 p-4 bg-gray-100 rounded-lg border">
           <div><strong>Company Name:</strong> {company.name}</div>
           <div><strong>Company ID:</strong> {company.code}</div>
+        </div>
+      ) : (
+        <div className="mb-6 p-3 bg-yellow-50 border rounded text-sm text-gray-700">
+          No owned company detected for current user.
         </div>
       )}
 
@@ -269,6 +280,26 @@ export default function CeoDashboard() {
           ))}
         </ul>
       </section>
+
+      {/* ---------------- DEBUG PANEL (temporary) ---------------- */}
+      {debugVisible && (
+        <div className="fixed right-4 bottom-4 w-96 max-w-full bg-white border rounded p-3 shadow-lg text-xs z-50">
+          <div className="flex justify-between items-center mb-2">
+            <strong>Debug (temp)</strong>
+            <button onClick={() => setDebugVisible(false)} className="text-gray-500">hide</button>
+          </div>
+          <div><strong>Current user id:</strong> {user?.id || '—'}</div>
+          <div><strong>Current user email:</strong> {user?.email || '—'}</div>
+          <div className="mt-2"><strong>Owned company ids:</strong> {JSON.stringify(ownedCompanyIdsRef.current)}</div>
+          <div className="mt-2"><strong>Company shown:</strong> {company ? company.name + ' (' + company.id + ')' : '—'}</div>
+          <div className="mt-2"><strong>Requests (count):</strong> {requests.length}</div>
+          <details className="mt-2">
+            <summary className="cursor-pointer">Raw requests (click)</summary>
+            <pre className="max-h-60 overflow-auto p-2 bg-gray-50 border mt-2 text-xs">{JSON.stringify(requests, null, 2)}</pre>
+          </details>
+          <div className="mt-2 text-gray-500">Refresh page & check console for logs.</div>
+        </div>
+      )}
     </div>
   )
 }
