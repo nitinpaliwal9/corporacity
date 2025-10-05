@@ -30,27 +30,17 @@ export default function EmployeeStatus() {
     let mounted = true
 
     const boot = async () => {
-      // 1) robustly detect session / user (supports different SDK shapes)
+      // ✅ Wait for Supabase session to be restored before fetching anything
       let currentUser = null
-      try {
-        const maybe = await supabase.auth.getUser?.()
-        currentUser = maybe?.data?.user ?? maybe?.user ?? null
-      } catch (e) {
-        console.debug('getUser() missing/failed', e)
+      for (let i = 0; i < 10; i++) {
+        const { data: sessionData } = await supabase.auth.getSession()
+        currentUser = sessionData?.session?.user || null
+        if (currentUser) break
+        await new Promise((r) => setTimeout(r, 200)) // wait 200ms
       }
 
       if (!currentUser) {
-        try {
-          const maybeSession = await supabase.auth.getSession?.()
-          const session = maybeSession?.data?.session ?? maybeSession?.session ?? null
-          currentUser = session?.user ?? null
-        } catch (e) {
-          console.debug('getSession() missing/failed', e)
-        }
-      }
-
-      if (!currentUser) {
-        // no signed-in user — nothing more to do
+        console.debug('❌ No active session found after retries')
         if (!mounted) return
         setUser(null)
         setProfile(null)
@@ -85,18 +75,11 @@ export default function EmployeeStatus() {
           .channel(`public:corp_memberships_user_${currentUser.id}`)
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'corp_memberships' }, payload => {
             const newRow = payload?.new
-            if (!newRow) return
-            if (newRow.user_id === currentUser.id) {
-              // refresh membership state
-              fetchMembership(currentUser.id)
-            }
+            if (newRow?.user_id === currentUser.id) fetchMembership(currentUser.id)
           })
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'corp_memberships' }, payload => {
             const newRow = payload?.new
-            if (!newRow) return
-            if (newRow.user_id === currentUser.id) {
-              fetchMembership(currentUser.id)
-            }
+            if (newRow?.user_id === currentUser.id) fetchMembership(currentUser.id)
           })
           .subscribe()
       } catch (e) {
@@ -109,10 +92,7 @@ export default function EmployeeStatus() {
           .channel(`public:corp_statuses_user_${currentUser.id}`)
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'corp_statuses' }, payload => {
             const newStatus = payload?.new
-            if (!newStatus) return
-            if (newStatus.user_id === currentUser.id) {
-              setStatuses(s => [newStatus, ...s])
-            }
+            if (newStatus?.user_id === currentUser.id) setStatuses(s => [newStatus, ...s])
           })
           .subscribe()
       } catch (e) {
@@ -125,16 +105,15 @@ export default function EmployeeStatus() {
     return () => {
       mounted = false
       try {
-        if (membershipsChannelRef.current?.unsubscribe) membershipsChannelRef.current.unsubscribe()
-        else if (membershipsChannelRef.current?.subscription?.unsubscribe) membershipsChannelRef.current.subscription.unsubscribe()
-      } catch (e) { /* ignore */ }
-
+        membershipsChannelRef.current?.unsubscribe?.()
+      } catch (e) {}
       try {
-        if (statusesChannelRef.current?.unsubscribe) statusesChannelRef.current.unsubscribe()
-        else if (statusesChannelRef.current?.subscription?.unsubscribe) statusesChannelRef.current.subscription.unsubscribe()
-      } catch (e) { /* ignore */ }
+        statusesChannelRef.current?.unsubscribe?.()
+      } catch (e) {}
     }
   }, [])
+
+  // same fetchMembership, loadPendingRequests, fetchStatuses, postStatus, logout, and JSX as before...
 
   // re-usable function to fetch membership + company + owner + statuses
   const fetchMembership = async (userId) => {
