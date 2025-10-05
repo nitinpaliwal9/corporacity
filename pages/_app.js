@@ -8,49 +8,48 @@ function App({ Component, pageProps }) {
   const router = useRouter()
 
   useEffect(() => {
-    // 1) If user returned from OAuth flow, let supabase-js parse/store the session from URL
+    // Parse session from URL (when returning from OAuth)
     const parseUrlSession = async () => {
       try {
-        // this reads tokens from the URL and stores session locally
         const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
         if (error) {
-          // Not fatal — often no session in URL (if not just returned from OAuth)
           console.debug('getSessionFromUrl warning', error.message || error)
         } else if (data?.session) {
-          console.log('OAuth session stored', data.session)
-          // proceed to ensure profile + membership + redirect
-          await ensureProfileAndDemoMembership(data.session)
+          // session present after OAuth
+          await postSignInFlow(data.session)
         }
       } catch (err) {
         console.error('Error parsing session from URL', err)
       }
     }
 
-    // 2) subscribe to live auth events also (SIGNED_IN will fire normally)
+    // Listen to realtime auth events (SIGNED_IN)
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event', event)
       if (event === 'SIGNED_IN' && session) {
-        await ensureProfileAndDemoMembership(session)
+        await postSignInFlow(session)
       }
     })
 
-    // try parsing url once on mount
     parseUrlSession()
-
     return () => {
       listener?.subscription?.unsubscribe()
     }
   }, [])
 
-  // helper: create profile, create demo membership, redirect
-  const ensureProfileAndDemoMembership = async (session) => {
+  // Post-sign-in logic:
+  // - ensure corp_profiles row exists
+  // - if profile incomplete -> redirect to /profile-setup
+  // - if no membership: auto-join DEMO123 (only for demo), else leave for user to create/join
+  // - redirect to /ceo if owner else /employee
+  const postSignInFlow = async (session) => {
     if (!session?.user) return
     const user = session.user
+
     try {
-      // 1) ensure profile exists
+      // ensure profile exists
       const { data: profile } = await supabase
         .from('corp_profiles')
-        .select('id')
+        .select('*')
         .eq('id', user.id)
         .maybeSingle()
 
@@ -62,14 +61,30 @@ function App({ Component, pageProps }) {
         }])
       }
 
-      // 2) ensure membership exists (if none, add to DEMO123 if present)
-      const { data: mem } = await supabase
+      // re-fetch profile to check completeness
+      const { data: freshProfile } = await supabase
+        .from('corp_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      // If profile is missing required fields, redirect to profile setup
+      const needsProfile = !freshProfile || !freshProfile.full_name
+      if (needsProfile) {
+        // keep any query params so the setup can use them
+        router.push('/profile-setup')
+        return
+      }
+
+      // check membership
+      const { data: mems } = await supabase
         .from('corp_memberships')
         .select('*')
         .eq('user_id', user.id)
         .limit(1)
 
-      if (!mem || mem.length === 0) {
+      // if no membership, try to auto-join demo (DEMO123). This is only for quick testing.
+      if (!mems || mems.length === 0) {
         const { data: demoCompany } = await supabase
           .from('corp_companies')
           .select('*')
@@ -86,7 +101,7 @@ function App({ Component, pageProps }) {
         }
       }
 
-      // 3) check if user owns a company -> redirect to /ceo else -> /employee
+      // find if user owns any company
       const { data: owned } = await supabase
         .from('corp_companies')
         .select('id')
@@ -98,8 +113,9 @@ function App({ Component, pageProps }) {
       } else {
         router.push('/employee')
       }
+
     } catch (err) {
-      console.error('ensureProfileAndDemoMembership error', err)
+      console.error('postSignInFlow error', err)
     }
   }
 

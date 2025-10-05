@@ -1,7 +1,7 @@
+// pages/create-company.js
 'use client'
 import { useState, useEffect } from 'react'
 import supabase from '../lib/supabaseClient'
-import { nanoid } from 'nanoid'
 
 export default function CreateCompany() {
   const [name, setName] = useState('')
@@ -16,16 +16,20 @@ export default function CreateCompany() {
 
   const create = async () => {
     setMsg('Creating...')
-    if (!user) return setMsg('Please sign in first on the homepage.')
+    if (!user) return setMsg('Please sign in first.')
     if (!name) return setMsg('Enter company name.')
 
     const code = name.split(' ')[0].toUpperCase().slice(0,5) + Math.random().toString(36).slice(2,7).toUpperCase()
-    const { data, error } = await supabase.from('companies').insert([{
+    const { data, error } = await supabase.from('corp_companies').insert([{
       name, code, owner_id: user.id
     }]).select().single()
 
     if (error) setMsg(error.message)
-    else setMsg(`Company created! Code: ${data.code}. Share this link with employees: ${location.origin}/join`)
+    else {
+      // create membership for the owner too
+      await supabase.from('corp_memberships').insert([{ user_id: user.id, company_id: data.id, role: 'owner' }])
+      setMsg(`Company created! Code: ${data.code}. Share this link with employees: ${location.origin}/join`)
+    }
   }
 
   return (

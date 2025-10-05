@@ -1,3 +1,4 @@
+// pages/employee.js
 'use client'
 import { useState, useEffect } from 'react'
 import supabase from '../lib/supabaseClient'
@@ -12,23 +13,27 @@ const STATUS_TYPES = [
 
 export default function EmployeeStatus() {
   const [user, setUser] = useState(null)
-  const [company, setCompany] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    // fetch current user + profile
+    supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user)
-      // fetch user's company membership (simple approach)
+      if (data.user) {
+        const { data: prof } = await supabase.from('corp_profiles').select('*').eq('id', data.user.id).maybeSingle()
+        setProfile(prof)
+      }
     })
   }, [])
 
   const postStatus = async (type) => {
     if (!user) return setMsg('Sign in first on the homepage.')
-    // find a company for demo: we pick the first company this user is a member of
-    const { data: membership } = await supabase.from('memberships').select('*').eq('user_id', user.id).limit(1).maybeSingle()
+    // use corp_memberships
+    const { data: membership } = await supabase.from('corp_memberships').select('*').eq('user_id', user.id).limit(1).maybeSingle()
     if (!membership) return setMsg('You are not member of any company. Ask admin to approve your join request.')
 
-    const { error } = await supabase.from('statuses').insert([{ user_id: user.id, company_id: membership.company_id, type, message: '' }])
+    const { error } = await supabase.from('corp_statuses').insert([{ user_id: user.id, company_id: membership.company_id, type, message: '' }])
     if (error) setMsg(error.message)
     else setMsg('Status posted.')
   }
@@ -36,6 +41,7 @@ export default function EmployeeStatus() {
   return (
     <div className='container'>
       <h2 className='text-xl font-semibold mb-4'>Update Your Day</h2>
+      {profile && <div className='mb-4'>Signed in as <strong>{profile.full_name || user.email}</strong></div>}
       <div className='grid grid-cols-2 gap-3 mb-4'>
         {STATUS_TYPES.map(s => (
           <button key={s.key} onClick={() => postStatus(s.key)} className='border rounded p-3 text-left'>

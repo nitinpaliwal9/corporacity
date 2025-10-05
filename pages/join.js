@@ -1,3 +1,4 @@
+// pages/join.js
 'use client'
 import { useState, useEffect } from 'react'
 import supabase from '../lib/supabaseClient'
@@ -17,10 +18,9 @@ export default function JoinCompany() {
     if (!user) return setMsg('Please sign in first on the homepage.')
     if (!code) return setMsg('Enter company code.')
 
-    // find company
-    const { data: company } = await supabase.from('companies').select('*').eq('code', code).single()
+    const { data: company } = await supabase.from('corp_companies').select('*').eq('code', code).single()
     if (!company) return setMsg('Company not found')
-    const { error } = await supabase.from('join_requests').insert([{ company_id: company.id, user_id: user.id, message: 'Request to join' }])
+    const { error } = await supabase.from('corp_join_requests').insert([{ company_id: company.id, user_id: user.id, message: 'Request to join' }])
     if (error) setMsg(error.message)
     else setMsg('Join request sent. Wait for CEO approval.')
   }
