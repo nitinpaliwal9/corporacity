@@ -19,9 +19,17 @@ export default function Home() {
   const signInWithGoogle = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
+    options: {
+      // ensure Supabase returns the user to your live domain
+      redirectTo: 'https://corporacity.hustlehackai.in'
+    }
   })
-  if (error) setMessage(error.message)
+  if (error) {
+    console.error('OAuth error', error)
+    setMessage(error.message)
+  }
 }
+
 
   return (
   <div className="min-h-screen flex items-center justify-center bg-[#F8F9FC]">
