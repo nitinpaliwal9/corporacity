@@ -188,15 +188,16 @@ export default function CeoDashboard() {
     // STEP 2 — attempt enriched fetch (with related profiles & companies).
     // This may return [] if nested relations fail due to FK/RLS.
     try {
-      const { data: data, error } = await supabase
-        .from('corp_join_requests')
-        .select(`
-          id, user_id, company_id, message, created_at,
-          corp_profiles(id, full_name, email),
-          corp_companies(id, name, owner_id)
-        `)
-        .in('company_id', companyIds)
-        .order('created_at', { ascending: false })
+      const { data, error } = await supabase
+  .from('corp_join_requests')
+  .select(`
+    id, user_id, company_id, message, created_at,
+    corp_profiles(id, full_name, email),
+    corp_companies!fk_cjr_company(id, name, owner_id)
+  `)
+  .in('company_id', companyIds)
+  .order('created_at', { ascending: false })
+
 
       if (error) {
         console.error('fetchRequestsForCompanyIds error', error)
