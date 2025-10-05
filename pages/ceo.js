@@ -270,31 +270,50 @@ export default function CeoDashboard() {
   }
 
   const approve = async (req) => {
-    try {
-      const { error: insertErr } = await supabase.from('corp_memberships').insert([
-        { user_id: req.user_id, company_id: req.company_id, role: 'employee' },
-      ])
-      if (insertErr) {
-        console.error('approve insert membership error', insertErr)
-        setLastError(JSON.stringify(insertErr))
-        return
-      }
+  try {
+    // 1️⃣ Securely call your API route (uses service role on the server)
+    const res = await fetch('/api/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: req.user_id,
+        company_id: req.company_id,
+      }),
+    })
 
-      const { error: delErr } = await supabase.from('corp_join_requests').delete().eq('id', req.id)
-      if (delErr) {
-        console.error('approve delete join request error', delErr)
-        setLastError(JSON.stringify(delErr))
-        return
-      }
-
-      setRequests((r) => r.filter((x) => x.id !== req.id))
-      setRawRequestsCount((c) => (c !== null ? Math.max(0, c - 1) : c))
-      setLastError(null)
-    } catch (err) {
-      console.error('approve exception', err)
-      setLastError(String(err))
+    const result = await res.json()
+    if (!res.ok) {
+      console.error('Approve API error:', result)
+      setLastError(JSON.stringify(result.error || result))
+      alert(result.error?.message || 'Error approving request')
+      return
     }
+
+    // 2️⃣ Delete join request (CEO’s session allowed by RLS)
+    const { error: delErr } = await supabase
+      .from('corp_join_requests')
+      .delete()
+      .eq('id', req.id)
+
+    if (delErr) {
+      console.error('approve delete join request error', delErr)
+      setLastError(JSON.stringify(delErr))
+      alert('Member added, but could not delete join request.')
+      return
+    }
+
+    // 3️⃣ Update UI + local state
+    setRequests((r) => r.filter((x) => x.id !== req.id))
+    setRawRequestsCount((c) => (c !== null ? Math.max(0, c - 1) : c))
+    setLastError(null)
+    alert('✅ Member approved successfully!')
+  } catch (err) {
+    console.error('approve exception', err)
+    setLastError(String(err))
+    alert('Unexpected error approving request')
   }
+}
+
 
   const deny = async (req) => {
     try {
