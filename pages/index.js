@@ -30,7 +30,6 @@ export default function Home() {
   }
 }
 
-
   return (
   <div className="min-h-screen flex items-center justify-center bg-[#F8F9FC]">
     <div className="w-full max-w-2xl mx-auto px-6 py-12">

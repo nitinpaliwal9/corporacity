@@ -9,14 +9,12 @@ export default function ProfileSetup() {
   const [user, setUser] = useState(null)
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
-  const [roleChoice, setRoleChoice] = useState('employee') // default
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user)
-      // try to prefill name if metadata exists
       setFullName(data.user?.user_metadata?.full_name || data.user?.user_metadata?.name || '')
     })
   }, [])
@@ -34,15 +32,8 @@ export default function ProfileSetup() {
         phone: phone || null
       }])
 
-      // If the user chose "I'm a CEO / want to create company" -> redirect to create company
-      if (roleChoice === 'create') {
-        router.push('/create-company')
-        return
-      }
-
-      // otherwise proceed to post-sign-in flow (trigger by refreshing session)
-      // We'll trigger the same postSignInFlow by redirecting to home which will call post-sign-in
-      router.push('/')
+      // After profile saved, go to onboarding so user creates/join
+      router.push('/onboarding')
     } catch (err) {
       console.error('saveProfile error', err)
       setMsg('Failed to save profile')
@@ -62,14 +53,6 @@ export default function ProfileSetup() {
 
         <label className="text-sm block mb-1">Phone (optional)</label>
         <input value={phone} onChange={(e)=>setPhone(e.target.value)} className="border p-2 rounded w-full mb-3" />
-
-        <div className="mb-4">
-          <label className="block mb-2 text-sm">What best describes you?</label>
-          <div className="flex gap-3">
-            <button onClick={()=>setRoleChoice('employee')} className={`px-3 py-2 border rounded ${roleChoice==='employee' ? 'bg-blue-50 border-blue-300' : ''}`}>I'm an employee</button>
-            <button onClick={()=>setRoleChoice('create')} className={`px-3 py-2 border rounded ${roleChoice==='create' ? 'bg-blue-50 border-blue-300' : ''}`}>I want to create a company</button>
-          </div>
-        </div>
 
         <div className="flex items-center gap-3">
           <button onClick={saveProfile} disabled={loading} className="bg-blue-600 text-white px-4 py-2 rounded">

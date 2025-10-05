@@ -15,7 +15,6 @@ function App({ Component, pageProps }) {
         if (error) {
           console.debug('getSessionFromUrl warning', error.message || error)
         } else if (data?.session) {
-          // session present after OAuth
           await postSignInFlow(data.session)
         }
       } catch (err) {
@@ -36,11 +35,7 @@ function App({ Component, pageProps }) {
     }
   }, [])
 
-  // Post-sign-in logic:
-  // - ensure corp_profiles row exists
-  // - if profile incomplete -> redirect to /profile-setup
-  // - if no membership: auto-join DEMO123 (only for demo), else leave for user to create/join
-  // - redirect to /ceo if owner else /employee
+  // Post sign-in: ensure profile exists, require full_name, then route user
   const postSignInFlow = async (session) => {
     if (!session?.user) return
     const user = session.user
@@ -68,10 +63,9 @@ function App({ Component, pageProps }) {
         .eq('id', user.id)
         .maybeSingle()
 
-      // If profile is missing required fields, redirect to profile setup
+      // If profile missing required fields -> redirect to profile-setup
       const needsProfile = !freshProfile || !freshProfile.full_name
       if (needsProfile) {
-        // keep any query params so the setup can use them
         router.push('/profile-setup')
         return
       }
@@ -83,22 +77,10 @@ function App({ Component, pageProps }) {
         .eq('user_id', user.id)
         .limit(1)
 
-      // if no membership, try to auto-join demo (DEMO123). This is only for quick testing.
+      // If no membership, send to onboarding where user chooses Create or Join
       if (!mems || mems.length === 0) {
-        const { data: demoCompany } = await supabase
-          .from('corp_companies')
-          .select('*')
-          .eq('code', 'DEMO123')
-          .limit(1)
-          .maybeSingle()
-
-        if (demoCompany) {
-          await supabase.from('corp_memberships').insert([{
-            user_id: user.id,
-            company_id: demoCompany.id,
-            role: 'employee'
-          }])
-        }
+        router.push('/onboarding')
+        return
       }
 
       // find if user owns any company

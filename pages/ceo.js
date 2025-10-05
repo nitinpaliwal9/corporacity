@@ -8,17 +8,17 @@ export default function CeoDashboard() {
   const [requests, setRequests] = useState([])
 
   useEffect(() => {
-    // fetch recent statuses (join with corp_profiles for name)
+    // fetch recent statuses
     supabase.from('corp_statuses').select('*, corp_profiles!inner(id, full_name)').order('timestamp', { ascending: false }).limit(50).then(({ data }) => {
       setFeed(data || [])
     })
 
-    // fetch join requests (and user email)
-    supabase.from('corp_join_requests').select('*, corp_profiles(id, full_name, email)').order('created_at', { ascending: false }).then(({ data }) => {
+    // fetch join requests
+    supabase.from('corp_join_requests').select('*, corp_profiles(id, full_name, email), corp_companies(id, name)').order('created_at', { ascending: false }).then(({ data }) => {
       setRequests(data || [])
     })
 
-    // setup realtime subscription for new statuses
+    // realtime for new statuses (enable Realtime on table)
     const channel = supabase.channel('public:corp_statuses')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'corp_statuses' }, payload => {
         setFeed(f => [payload.new, ...f])
@@ -31,10 +31,23 @@ export default function CeoDashboard() {
   }, [])
 
   const approve = async (req) => {
-    // create membership and remove request
-    await supabase.from('corp_memberships').insert([{ user_id: req.user_id, company_id: req.company_id }])
-    await supabase.from('corp_join_requests').delete().eq('id', req.id)
-    setRequests(r => r.filter(x => x.id !== req.id))
+    try {
+      // create membership and remove request
+      await supabase.from('corp_memberships').insert([{ user_id: req.user_id, company_id: req.company_id, role: 'employee' }])
+      await supabase.from('corp_join_requests').delete().eq('id', req.id)
+      setRequests(r => r.filter(x => x.id !== req.id))
+    } catch (err) {
+      console.error('approve error', err)
+    }
+  }
+
+  const deny = async (req) => {
+    try {
+      await supabase.from('corp_join_requests').delete().eq('id', req.id)
+      setRequests(r => r.filter(x => x.id !== req.id))
+    } catch (err) {
+      console.error('deny error', err)
+    }
   }
 
   return (
@@ -47,8 +60,14 @@ export default function CeoDashboard() {
         <ul>
           {requests.map(r => (
             <li key={r.id} className='border p-2 mb-2 flex justify-between items-center'>
-              <div>{r.corp_profiles?.full_name || r.corp_profiles?.email || r.user_id}</div>
-              <div><button onClick={() => approve(r)} className='bg-green-600 text-white px-3 py-1 rounded'>Approve</button></div>
+              <div>
+                <div className='font-semibold'>{r.corp_profiles?.full_name || r.corp_profiles?.email || r.user_id}</div>
+                <div className='text-sm text-gray-600'>{r.corp_companies?.name || ''}</div>
+              </div>
+              <div className='flex gap-2'>
+                <button onClick={() => approve(r)} className='bg-green-600 text-white px-3 py-1 rounded'>Approve</button>
+                <button onClick={() => deny(r)} className='bg-red-500 text-white px-3 py-1 rounded'>Deny</button>
+              </div>
             </li>
           ))}
         </ul>
