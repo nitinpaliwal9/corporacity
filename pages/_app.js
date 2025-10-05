@@ -8,7 +8,15 @@ function App({ Component, pageProps }) {
   const router = useRouter()
 
   useEffect(() => {
-    // Parse session from URL (when returning from OAuth)
+    // 1️⃣ Restore session on page load (persistent login)
+    const restoreSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (data?.session) {
+        await postSignInFlow(data.session)
+      }
+    }
+
+    // 2️⃣ Parse session from URL (OAuth redirect)
     const parseUrlSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
@@ -22,20 +30,24 @@ function App({ Component, pageProps }) {
       }
     }
 
-    // Listen to realtime auth events (SIGNED_IN)
+    // 3️⃣ Listen for realtime auth changes (login/logout)
     const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         await postSignInFlow(session)
+      } else if (event === 'SIGNED_OUT') {
+        router.push('/')
       }
     })
 
+    restoreSession()
     parseUrlSession()
+
     return () => {
       listener?.subscription?.unsubscribe()
     }
   }, [])
 
-  // Post sign-in: ensure profile exists, require full_name, then route user
+  // 🔄 Post sign-in flow: profile setup + routing
   const postSignInFlow = async (session) => {
     if (!session?.user) return
     const user = session.user
@@ -56,14 +68,14 @@ function App({ Component, pageProps }) {
         }])
       }
 
-      // re-fetch profile to check completeness
+      // re-fetch updated profile
       const { data: freshProfile } = await supabase
         .from('corp_profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle()
 
-      // If profile missing required fields -> redirect to profile-setup
+      // if full_name missing → go to profile setup
       const needsProfile = !freshProfile || !freshProfile.full_name
       if (needsProfile) {
         router.push('/profile-setup')
@@ -77,13 +89,12 @@ function App({ Component, pageProps }) {
         .eq('user_id', user.id)
         .limit(1)
 
-      // If no membership, send to onboarding where user chooses Create or Join
       if (!mems || mems.length === 0) {
         router.push('/onboarding')
         return
       }
 
-      // find if user owns any company
+      // check if user owns a company
       const { data: owned } = await supabase
         .from('corp_companies')
         .select('id')
