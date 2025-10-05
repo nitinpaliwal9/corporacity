@@ -1,53 +1,55 @@
 // pages/_app.js
 import '../styles/globals.css'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import supabase from '../lib/supabaseClient'
 
 function App({ Component, pageProps }) {
   const router = useRouter()
+  const bootstrappedRef = useRef(false)
 
   useEffect(() => {
-    // 1️⃣ Restore session on page load (persistent login)
-    const restoreSession = async () => {
-      const { data } = await supabase.auth.getSession()
-      if (data?.session) {
-        await postSignInFlow(data.session)
-      }
-    }
+    let listener = null
+    let cancelled = false
 
-    // 2️⃣ Parse session from URL (OAuth redirect)
-    const parseUrlSession = async () => {
+    const bootstrap = async () => {
+      // 1) try to restore persisted session (if any)
       try {
-        const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true })
-        if (error) {
-          console.debug('getSessionFromUrl warning', error.message || error)
-        } else if (data?.session) {
+        const { data } = await supabase.auth.getSession()
+        if (data?.session) {
           await postSignInFlow(data.session)
         }
       } catch (err) {
-        console.error('Error parsing session from URL', err)
+        console.debug('getSession() failed or not available:', err)
       }
+
+      // 2) subscribe to auth state changes for future sign-ins
+      const sub = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          await postSignInFlow(session)
+        } else if (event === 'SIGNED_OUT') {
+          router.push('/')
+        }
+      })
+
+      // keep reference for cleanup
+      listener = sub
+      bootstrappedRef.current = true
     }
 
-    // 3️⃣ Listen for realtime auth changes (login/logout)
-    const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        await postSignInFlow(session)
-      } else if (event === 'SIGNED_OUT') {
-        router.push('/')
-      }
-    })
-
-    restoreSession()
-    parseUrlSession()
+    bootstrap()
 
     return () => {
-      listener?.subscription?.unsubscribe()
+      cancelled = true
+      try {
+        // unsubscribe callback depending on SDK shape
+        if (listener?.subscription?.unsubscribe) listener.subscription.unsubscribe()
+        else if (listener?.unsubscribe) listener.unsubscribe()
+      } catch (e) {}
     }
   }, [])
 
-  // 🔄 Post sign-in flow: profile setup + routing
+  // Post sign-in: ensure profile exists, require full_name, then route user
   const postSignInFlow = async (session) => {
     if (!session?.user) return
     const user = session.user
