@@ -1,6 +1,6 @@
 // pages/employee.js
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import supabase from '../lib/supabaseClient'
 
@@ -23,98 +23,237 @@ export default function EmployeeStatus() {
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const membershipsChannelRef = useRef(null)
+  const statusesChannelRef = useRef(null)
 
   useEffect(() => {
-    let channel = null
+    let mounted = true
 
-    const init = async () => {
-      // fetch current user + profile
-      const { data: authData } = await supabase.auth.getUser()
-      const currentUser = authData?.user
-      setUser(currentUser)
-      if (!currentUser) return
+    const boot = async () => {
+      // 1) robustly detect session / user (supports different SDK shapes)
+      let currentUser = null
+      try {
+        const maybe = await supabase.auth.getUser?.()
+        currentUser = maybe?.data?.user ?? maybe?.user ?? null
+      } catch (e) {
+        console.debug('getUser() missing/failed', e)
+      }
 
-      const { data: prof } = await supabase
-        .from('corp_profiles')
-        .select('*')
-        .eq('id', currentUser.id)
-        .maybeSingle()
-      setProfile(prof)
-
-      // check membership
-      const { data: mem } = await supabase
-        .from('corp_memberships')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .maybeSingle()
-
-      if (mem) {
-        setMembership(mem)
-        // fetch company
-        const { data: comp } = await supabase
-          .from('corp_companies')
-          .select('*')
-          .eq('id', mem.company_id)
-          .maybeSingle()
-        setCompany(comp || null)
-
-        if (comp) {
-          // fetch owner profile (CEO)
-          const { data: owner } = await supabase
-            .from('corp_profiles')
-            .select('id, full_name, email')
-            .eq('id', comp.owner_id)
-            .maybeSingle()
-          setCompanyOwner(owner || null)
+      if (!currentUser) {
+        try {
+          const maybeSession = await supabase.auth.getSession?.()
+          const session = maybeSession?.data?.session ?? maybeSession?.session ?? null
+          currentUser = session?.user ?? null
+        } catch (e) {
+          console.debug('getSession() missing/failed', e)
         }
+      }
 
-        // fetch user's last 10 statuses (My Updates)
-        await fetchStatuses(comp?.id, currentUser.id)
+      if (!currentUser) {
+        // no signed-in user — nothing more to do
+        if (!mounted) return
+        setUser(null)
+        setProfile(null)
+        setMembership(null)
+        setCompany(null)
+        setPendingRequests([])
+        return
+      }
 
-        // subscribe to realtime statuses for this user (so "My Updates" updates instantly)
-        channel = supabase
-          .channel(`public:corp_statuses_user_${currentUser.id}`)
-          .on(
-            'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'corp_statuses' },
-            payload => {
-              if (payload.new.user_id === currentUser.id) {
-                setStatuses(s => [payload.new, ...s])
-              }
+      if (!mounted) return
+      setUser(currentUser)
+
+      // fetch profile
+      try {
+        const { data: prof, error: profErr } = await supabase
+          .from('corp_profiles')
+          .select('*')
+          .eq('id', currentUser.id)
+          .maybeSingle()
+        if (profErr) console.debug('profile fetch error', profErr)
+        setProfile(prof || null)
+      } catch (e) {
+        console.debug('profile fetch exception', e)
+      }
+
+      // fetch membership (separate call — avoids nested FK embedding)
+      await fetchMembership(currentUser.id)
+
+      // subscribe to membership inserts/updates so user sees CEO approval immediately
+      try {
+        membershipsChannelRef.current = supabase
+          .channel(`public:corp_memberships_user_${currentUser.id}`)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'corp_memberships' }, payload => {
+            const newRow = payload?.new
+            if (!newRow) return
+            if (newRow.user_id === currentUser.id) {
+              // refresh membership state
+              fetchMembership(currentUser.id)
             }
-          )
+          })
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'corp_memberships' }, payload => {
+            const newRow = payload?.new
+            if (!newRow) return
+            if (newRow.user_id === currentUser.id) {
+              fetchMembership(currentUser.id)
+            }
+          })
           .subscribe()
-      } else {
-        // no membership: check if there's any pending join requests by this user
-        const { data: pendings } = await supabase
-          .from('corp_join_requests')
-          .select('*, corp_companies(id, name)')
-          .eq('user_id', currentUser.id)
-          .order('created_at', { ascending: false })
+      } catch (e) {
+        console.debug('membership realtime subscribe failed', e)
+      }
 
-        setPendingRequests(pendings || [])
+      // subscribe to statuses so "My Updates" updates instantly
+      try {
+        statusesChannelRef.current = supabase
+          .channel(`public:corp_statuses_user_${currentUser.id}`)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'corp_statuses' }, payload => {
+            const newStatus = payload?.new
+            if (!newStatus) return
+            if (newStatus.user_id === currentUser.id) {
+              setStatuses(s => [newStatus, ...s])
+            }
+          })
+          .subscribe()
+      } catch (e) {
+        console.debug('statuses realtime subscribe failed', e)
       }
     }
 
-    init()
+    boot()
 
     return () => {
-      if (channel) {
-        try { channel.unsubscribe() } catch (e) { /* ignore */ }
-      }
+      mounted = false
+      try {
+        if (membershipsChannelRef.current?.unsubscribe) membershipsChannelRef.current.unsubscribe()
+        else if (membershipsChannelRef.current?.subscription?.unsubscribe) membershipsChannelRef.current.subscription.unsubscribe()
+      } catch (e) { /* ignore */ }
+
+      try {
+        if (statusesChannelRef.current?.unsubscribe) statusesChannelRef.current.unsubscribe()
+        else if (statusesChannelRef.current?.subscription?.unsubscribe) statusesChannelRef.current.subscription.unsubscribe()
+      } catch (e) { /* ignore */ }
     }
   }, [])
 
+  // re-usable function to fetch membership + company + owner + statuses
+  const fetchMembership = async (userId) => {
+    if (!userId) return
+    try {
+      const { data: mem, error: memErr } = await supabase
+        .from('corp_memberships')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle()
+
+      if (memErr) {
+        console.debug('membership fetch error', memErr)
+        setMembership(null)
+        setCompany(null)
+        setCompanyOwner(null)
+        // fallback to pending requests
+        await loadPendingRequests(userId)
+        return
+      }
+
+      if (!mem) {
+        setMembership(null)
+        setCompany(null)
+        setCompanyOwner(null)
+        // no membership → show pending requests
+        await loadPendingRequests(userId)
+        return
+      }
+
+      // we have a membership — populate state
+      setMembership(mem)
+
+      // fetch company separately
+      const { data: comp, error: compErr } = await supabase
+        .from('corp_companies')
+        .select('*')
+        .eq('id', mem.company_id)
+        .maybeSingle()
+
+      if (compErr) {
+        console.debug('company fetch error', compErr)
+        setCompany(null)
+      } else {
+        setCompany(comp || null)
+      }
+
+      // fetch company owner profile
+      if (comp) {
+        const { data: owner, error: ownerErr } = await supabase
+          .from('corp_profiles')
+          .select('id, full_name, email')
+          .eq('id', comp.owner_id)
+          .maybeSingle()
+
+        if (ownerErr) {
+          console.debug('owner fetch error', ownerErr)
+          setCompanyOwner(null)
+        } else {
+          setCompanyOwner(owner || null)
+        }
+      } else {
+        setCompanyOwner(null)
+      }
+
+      // fetch statuses (last 10)
+      await fetchStatuses(mem.company_id, userId)
+    } catch (err) {
+      console.error('fetchMembership exception', err)
+      setMembership(null)
+      setCompany(null)
+      setCompanyOwner(null)
+    }
+  }
+
+  const loadPendingRequests = async (userId) => {
+    try {
+      // explicit relationship name for corp_companies if needed: use !fk_cjr_company if you added that previously
+      const { data: pendings, error } = await supabase
+        .from('corp_join_requests')
+        .select('id, user_id, company_id, message, created_at, corp_companies(id, name)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.debug('pending requests fetch error', error)
+        setPendingRequests([])
+        return
+      }
+
+      setPendingRequests(pendings || [])
+    } catch (err) {
+      console.debug('loadPendingRequests exception', err)
+      setPendingRequests([])
+    }
+  }
+
   const fetchStatuses = async (companyId, userId) => {
     if (!companyId || !userId) return
-    const { data } = await supabase
-      .from('corp_statuses')
-      .select('*, corp_profiles(id, full_name)')
-      .eq('company_id', companyId)
-      .eq('user_id', userId)
-      .order('timestamp', { ascending: false })
-      .limit(10)
-    setStatuses(data || [])
+    try {
+      const { data, error } = await supabase
+        .from('corp_statuses')
+        .select('id, user_id, company_id, type, message, timestamp')
+        .eq('company_id', companyId)
+        .eq('user_id', userId)
+        .order('timestamp', { ascending: false })
+        .limit(10)
+
+      if (error) {
+        console.debug('fetchStatuses error', error)
+        setStatuses([])
+        return
+      }
+
+      setStatuses(data || [])
+    } catch (err) {
+      console.debug('fetchStatuses exception', err)
+      setStatuses([])
+    }
   }
 
   const postStatus = async (type) => {
@@ -213,7 +352,7 @@ export default function EmployeeStatus() {
             {statuses.map(item => (
               <li key={item.id} className='border p-2 mb-2'>
                 <div className='text-sm text-gray-600'>{new Date(item.timestamp).toLocaleString()}</div>
-                <div><strong>{item.corp_profiles?.full_name || item.user_id}</strong> — {item.type} {item.message}</div>
+                <div><strong>{profile?.full_name || item.user_id}</strong> — {item.type} {item.message}</div>
               </li>
             ))}
           </ul>
