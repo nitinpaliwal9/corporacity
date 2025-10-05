@@ -1,73 +1,108 @@
 // pages/_app.js
 import '../styles/globals.css'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import supabase from '../lib/supabaseClient'
 
 function App({ Component, pageProps }) {
   const router = useRouter()
   const bootstrappedRef = useRef(false)
+  const listenerRef = useRef(null)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    let listener = null
     let cancelled = false
 
     const bootstrap = async () => {
       // 1) try to restore persisted session (if any)
       try {
-        const { data } = await supabase.auth.getSession()
-        if (data?.session) {
-          await postSignInFlow(data.session)
+        // supabase.auth.getSession() is v2-style; wrap in try/catch to be safe
+        const maybe = await supabase.auth.getSession?.()
+        const session = maybe?.data?.session ?? maybe?.session ?? null
+
+        if (session) {
+          await postSignInFlow(session)
         }
       } catch (err) {
-        console.debug('getSession() failed or not available:', err)
+        // don't fail hard — older/newer SDK shapes might differ
+        console.debug('getSession() unavailable or failed:', err)
       }
 
       // 2) subscribe to auth state changes for future sign-ins
-      const sub = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          await postSignInFlow(session)
-        } else if (event === 'SIGNED_OUT') {
-          router.push('/')
-        }
-      })
+      try {
+        const sub = await supabase.auth.onAuthStateChange?.(
+          async (event, session) => {
+            // keep behavior deliberate and safe
+            if (event === 'SIGNED_IN' && session) {
+              await postSignInFlow(session)
+            } else if (event === 'SIGNED_OUT') {
+              // on sign-out, send user to the guest landing page
+              if (router.pathname !== '/') router.replace('/')
+            }
+          }
+        )
 
-      // keep reference for cleanup
-      listener = sub
+        // store listener for cleanup. different SDKs return different shapes.
+        listenerRef.current = sub
+      } catch (err) {
+        console.debug('onAuthStateChange unavailable or failed:', err)
+      }
+
       bootstrappedRef.current = true
+      if (!cancelled) setReady(true)
     }
 
     bootstrap()
 
     return () => {
       cancelled = true
+      // unsubscribe gracefully across SDK versions
       try {
-        // unsubscribe callback depending on SDK shape
-        if (listener?.subscription?.unsubscribe) listener.subscription.unsubscribe()
-        else if (listener?.unsubscribe) listener.unsubscribe()
-      } catch (e) {}
-    }
-  }, [])
+        const sub = listenerRef.current
+        if (!sub) return
 
-  // Post sign-in: ensure profile exists, require full_name, then route user
+        // v2: sub?.subscription?.unsubscribe()
+        if (sub?.subscription?.unsubscribe) sub.subscription.unsubscribe()
+        // v1: sub?.unsubscribe()
+        else if (typeof sub.unsubscribe === 'function') sub.unsubscribe()
+        // v2 alternative: sub?.data?.subscription?.unsubscribe()
+        else if (sub?.data?.subscription?.unsubscribe) sub.data.subscription.unsubscribe()
+      } catch (e) {
+        console.debug('error unsubscribing auth listener', e)
+      }
+    }
+  }, []) // run once on client
+
+  // Post sign-in: ensure profile, require full_name, then route user
   const postSignInFlow = async (session) => {
     if (!session?.user) return
     const user = session.user
 
     try {
       // ensure profile exists
-      const { data: profile } = await supabase
+      const { data: profile, error: profileErr } = await supabase
         .from('corp_profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle()
 
+      if (profileErr) {
+        console.debug('profile select error (non-fatal):', profileErr)
+      }
+
       if (!profile) {
-        await supabase.from('corp_profiles').insert([{
+        const insertPayload = {
           id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null
-        }])
+          email: user.email ?? null,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+        }
+        const { error: insertErr } = await supabase
+          .from('corp_profiles')
+          .insert([insertPayload])
+
+        if (insertErr) {
+          console.warn('failed to insert corp_profiles:', insertErr)
+        }
       }
 
       // re-fetch updated profile
@@ -80,19 +115,19 @@ function App({ Component, pageProps }) {
       // if full_name missing → go to profile setup
       const needsProfile = !freshProfile || !freshProfile.full_name
       if (needsProfile) {
-        router.push('/profile-setup')
+        if (router.pathname !== '/profile-setup') router.replace('/profile-setup')
         return
       }
 
       // check membership
       const { data: mems } = await supabase
         .from('corp_memberships')
-        .select('*')
+        .select('id, company_id')
         .eq('user_id', user.id)
         .limit(1)
 
       if (!mems || mems.length === 0) {
-        router.push('/onboarding')
+        if (router.pathname !== '/onboarding') router.replace('/onboarding')
         return
       }
 
@@ -104,18 +139,23 @@ function App({ Component, pageProps }) {
         .limit(1)
 
       if (owned && owned.length > 0) {
-        router.push('/ceo')
+        if (router.pathname !== '/ceo') router.replace('/ceo')
       } else {
-        router.push('/employee')
+        if (router.pathname !== '/employee') router.replace('/employee')
       }
-
     } catch (err) {
       console.error('postSignInFlow error', err)
     }
   }
 
+  // Render app even while bootstrapping to avoid blank screen for public pages,
+  // but don't render until initial bootstrap attempt finished to avoid race conditions
+  if (!ready) {
+    // simple client-side placeholder while we detect session.
+    return null
+  }
+
   return <Component {...pageProps} />
 }
 
-//this is a comment that i am writing here
 export default App

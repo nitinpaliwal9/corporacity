@@ -12,9 +12,31 @@ export default function JoinCompany() {
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-    })
+    let mounted = true
+    const boot = async () => {
+      try {
+        // Try v2 getUser shape
+        const maybe = await supabase.auth.getUser?.()
+        const u = maybe?.data?.user ?? maybe?.user ?? null
+
+        // Fallback to getSession (older/newer shapes)
+        if (!u) {
+          const maybeSession = await supabase.auth.getSession?.()
+          const session = maybeSession?.data?.session ?? maybeSession?.session ?? null
+          if (session?.user) {
+            if (mounted) setUser(session.user)
+            return
+          }
+        }
+
+        if (u && mounted) setUser(u)
+      } catch (err) {
+        console.debug('auth bootstrap error (non-fatal):', err)
+      }
+    }
+
+    boot()
+    return () => { mounted = false }
   }, [])
 
   const requestJoin = async () => {
@@ -32,7 +54,13 @@ export default function JoinCompany() {
         .eq('code', code.trim())
         .maybeSingle()
 
-      if (companyErr) throw companyErr
+      if (companyErr) {
+        console.error('company lookup error', companyErr)
+        setMsg('Error while checking company. See console for details.')
+        setLoading(false)
+        return
+      }
+
       if (!company) {
         setMsg('❌ Company not found. Check the ID and try again.')
         setLoading(false)
@@ -40,12 +68,19 @@ export default function JoinCompany() {
       }
 
       // Step 2: check if already member
-      const { data: member } = await supabase
+      const { data: member, error: memberErr } = await supabase
         .from('corp_memberships')
         .select('*')
         .eq('user_id', user.id)
         .eq('company_id', company.id)
         .maybeSingle()
+
+      if (memberErr) {
+        console.error('membership check error', memberErr)
+        setMsg('Error checking membership. See console.')
+        setLoading(false)
+        return
+      }
 
       if (member) {
         setMsg('You are already a member of this company.')
@@ -54,12 +89,19 @@ export default function JoinCompany() {
       }
 
       // Step 3: check if a join request already exists
-      const { data: existing } = await supabase
+      const { data: existing, error: existingErr } = await supabase
         .from('corp_join_requests')
         .select('*')
         .eq('company_id', company.id)
         .eq('user_id', user.id)
         .maybeSingle()
+
+      if (existingErr) {
+        console.error('existing request check error', existingErr)
+        setMsg('Error checking existing requests. See console.')
+        setLoading(false)
+        return
+      }
 
       if (existing) {
         setMsg('You already have a pending join request for this company.')
@@ -67,26 +109,34 @@ export default function JoinCompany() {
         return
       }
 
-      // Step 4: insert new join request
-      const { error } = await supabase.from('corp_join_requests').insert([
-        {
-          company_id: company.id,
-          user_id: user.id,
-          message: 'Request to join this company',
-        },
-      ])
+      // Step 4: insert new join request (final check + insert)
+      const { data: insertData, error: insertErr } = await supabase
+        .from('corp_join_requests')
+        .insert([
+          {
+            company_id: company.id,
+            user_id: user.id,
+            message: 'Request to join this company',
+          },
+        ])
 
-      if (error) throw error
+      if (insertErr) {
+        // Surface RLS / permission errors clearly
+        console.error('join request insert error', insertErr)
+        const friendly = insertErr.message || 'Failed to send join request (permissions or RLS may block this).'
+        setMsg(`❌ ${friendly}`)
+        setLoading(false)
+        return
+      }
 
       setMsg(`✅ Join request sent to ${company.name}. Please wait for CEO approval.`)
 
-      // optional redirect after 2 seconds
       setTimeout(() => {
         router.push('/employee')
-      }, 2000)
+      }, 1200)
     } catch (err) {
-      console.error('join-company error:', err)
-      setMsg(err.message || 'Something went wrong. Please try again.')
+      console.error('join-company unexpected error:', err)
+      setMsg(err?.message || JSON.stringify(err) || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
