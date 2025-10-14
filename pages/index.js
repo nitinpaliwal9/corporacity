@@ -32,19 +32,29 @@ export default function Home() {
     setLoading(true)
     setMessage('')
     
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: 'https://corporacity.hustlehackai.in'
+    try {
+      console.log('Starting Google sign-in...')
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/onboarding`
+        }
+      })
+      
+      console.log('Google sign-in result:', { data, error })
+      
+      if (error) {
+        console.error('Google sign-in error:', error)
+        setMessage(`Sign in failed: ${error.message}`)
+      } else {
+        console.log('Google sign-in initiated successfully')
       }
-    })
-    
-    if (error) {
-      console.error('OAuth error', error)
-      setMessage(error.message)
+    } catch (err) {
+      console.error('Google sign-in exception:', err)
+      setMessage(`Sign in failed: ${err.message}`)
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   const containerVariants = {

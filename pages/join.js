@@ -68,19 +68,25 @@ export default function JoinCompany() {
       }
 
       try {
+        console.log('Checking company with code:', code.trim().toUpperCase())
         const { data: company, error } = await supabase
           .from('corp_companies')
           .select('*')
           .eq('code', code.trim().toUpperCase())
           .maybeSingle()
 
+        console.log('Company lookup result:', { company, error })
+        
         if (!error && company) {
           setCompanyInfo(company)
         } else {
           setCompanyInfo(null)
+          if (error) {
+            console.error('Company lookup error:', error)
+          }
         }
       } catch (err) {
-        console.debug('Company check error:', err)
+        console.error('Company check error:', err)
         setCompanyInfo(null)
       }
     }
@@ -333,6 +339,34 @@ export default function JoinCompany() {
                     </motion.div>
                   )}
 
+                  {/* Debug Info - Remove this in production */}
+                  {code.trim() && !companyInfo && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-1">
+                            Company Not Found
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            Code: {code.trim().toUpperCase()}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Check the code and try again
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant="warning" size="medium">
+                            Not Found
+                          </Badge>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
                   {/* Process Steps */}
                   <div className="space-y-3">
                     <h4 className="text-sm font-semibold text-gray-900">
@@ -363,7 +397,7 @@ export default function JoinCompany() {
             <Button
               onClick={requestJoin}
               loading={loading}
-              disabled={!companyInfo}
+              disabled={loading || !code.trim()}
               size="large"
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
