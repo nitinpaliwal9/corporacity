@@ -279,8 +279,18 @@ export default function CeoDashboard() {
 
   const approve = async (req) => {
   try {
-    // 1️⃣ Securely call your API route (uses service role on the server)
-    const res = await fetch('/api/approve', {
+        console.log('Starting approve process:', req)
+        
+        // Test if API endpoint is accessible first
+        try {
+          const testRes = await fetch('/api/approve', { method: 'OPTIONS' })
+          console.log('API endpoint test:', testRes.status, testRes.statusText)
+        } catch (testErr) {
+          console.error('API endpoint not accessible:', testErr)
+        }
+        
+        // 1️⃣ Securely call your API route (uses service role on the server)
+        const res = await fetch('/api/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -288,6 +298,9 @@ export default function CeoDashboard() {
         company_id: req.company_id,
       }),
     })
+    
+    console.log('API response status:', res.status, res.statusText)
+    console.log('API response headers:', Object.fromEntries(res.headers.entries()))
 
     const result = await res.json()
     if (!res.ok) {
