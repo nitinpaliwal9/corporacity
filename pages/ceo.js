@@ -22,6 +22,7 @@ export default function CeoDashboard() {
   const [debugVisible, setDebugVisible] = useState(true)
   const [lastError, setLastError] = useState(null)
   const [rawRequestsCount, setRawRequestsCount] = useState(null)
+  const [loading, setLoading] = useState(true)
   const ownedCompanyIdsRef = useRef([])
   const router = useRouter()
 
@@ -31,38 +32,53 @@ export default function CeoDashboard() {
     let mounted = true
 
     const loadData = async () => {
-      // wait for session to be restored (defensive)
+      // Wait for session to be restored with retry mechanism (similar to employee dashboard)
       let session = null
-      try {
-        const maybe = await supabase.auth.getSession?.()
-        session = maybe?.data?.session ?? maybe?.session ?? null
-      } catch (err) {
-        console.debug('getSession() threw (non-fatal):', err)
-      }
+      let currentUser = null
+      
+      // Try multiple times to get the session, as it might not be immediately available
+      for (let i = 0; i < 10; i++) {
+        try {
+          const maybe = await supabase.auth.getSession?.()
+          session = maybe?.data?.session ?? maybe?.session ?? null
+          currentUser = session?.user || null
+          if (currentUser) break
+        } catch (err) {
+          console.debug('getSession() threw (non-fatal):', err)
+        }
 
-      // If no session found, still try getUser (older SDK shapes)
-      try {
-        if (!session) {
-          const maybeUser = await supabase.auth.getUser?.()
-          const userObj = maybeUser?.data?.user ?? maybeUser?.user ?? null
-          if (userObj) {
-            session = { user: userObj }
+        // If no session found, try getUser (older SDK shapes)
+        if (!currentUser) {
+          try {
+            const maybeUser = await supabase.auth.getUser?.()
+            const userObj = maybeUser?.data?.user ?? maybeUser?.user ?? null
+            if (userObj) {
+              currentUser = userObj
+              session = { user: userObj }
+              break
+            }
+          } catch (err) {
+            console.debug('getUser() threw (non-fatal):', err)
           }
         }
-      } catch (err) {
-        console.debug('getUser() threw (non-fatal):', err)
+
+        if (currentUser) break
+        
+        // Wait 200ms before retrying
+        await new Promise((r) => setTimeout(r, 200))
       }
 
-      if (!session?.user) {
-        console.debug('No authenticated user detected during CEO bootstrap.')
+      if (!currentUser) {
+        console.debug('No authenticated user detected after retries during CEO bootstrap.')
         setUser(null)
         setCompany(null)
         setRequests([])
         setLastError('No authenticated user')
+        setLoading(false)
         return
       }
 
-      const currentUser = session.user
+      console.log('CEO Dashboard: User authenticated:', currentUser.email)
       setUser(currentUser)
       setLastError(null)
 
@@ -78,14 +94,18 @@ export default function CeoDashboard() {
           setLastError(JSON.stringify(ownedErr))
         }
 
+        console.log('CEO Dashboard: Fetched owned companies:', ownedCompanies)
+
         const ownedIds = (ownedCompanies || []).map(c => c.id)
         ownedCompanyIdsRef.current = ownedIds
 
         if (mounted && ownedCompanies && ownedCompanies.length > 0) {
+          console.log('CEO Dashboard: Setting company:', ownedCompanies[0])
           setCompany(ownedCompanies[0])
           await fetchFeed(ownedCompanies[0].id)
           await fetchStats(ownedCompanies[0].id)
         } else {
+          console.log('CEO Dashboard: No owned companies found')
           setCompany(null)
           setFeed([])
           setStats({ present: 0, late: 0, leave: 0, visit: 0 })
@@ -101,6 +121,8 @@ export default function CeoDashboard() {
       } catch (err) {
         console.error('loadData top-level error', err)
         setLastError(String(err))
+      } finally {
+        setLoading(false)
       }
 
       // setup realtime channels (defensive unsubscribe)
@@ -302,93 +324,82 @@ export default function CeoDashboard() {
   }
 
   const approve = async (req) => {
-  try {
-        console.log('Starting approve process:', req)
+    try {
+      console.log('Starting approve process:', req)
+      
+      // Use the API endpoint which now handles both membership creation and join request deletion
+      try {
+        const res = await fetch('/api/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: req.user_id,
+            company_id: req.company_id,
+          }),
+        })
         
-        // Try API first, fallback to direct Supabase if it fails
-        let apiSuccess = false
+        console.log('API response status:', res.status, res.statusText)
         
-        try {
-          // Test if API endpoint is accessible first
-          const testRes = await fetch('/api/approve', { method: 'OPTIONS' })
-          console.log('API endpoint test:', testRes.status, testRes.statusText)
-          
-          // 1️⃣ Try API route first
-          const res = await fetch('/api/approve', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: req.user_id,
-              company_id: req.company_id,
-            }),
-          })
-          
-          console.log('API response status:', res.status, res.statusText)
-          console.log('API response headers:', Object.fromEntries(res.headers.entries()))
-
-          // Check if response has content
-          const contentType = res.headers.get('content-type')
-          console.log('Response content-type:', contentType)
-          
-          let result
-          try {
-            if (contentType && contentType.includes('application/json')) {
-              result = await res.json()
-            } else {
-              const text = await res.text()
-              console.log('Non-JSON response:', text)
-              throw new Error(`Expected JSON response, got: ${text}`)
-            }
-          } catch (jsonError) {
-            console.error('JSON parsing error:', jsonError)
-            throw new Error(`API response error: ${jsonError.message}`)
-          }
-
-          if (!res.ok) {
-            console.error('Approve API error:', result)
-            throw new Error(result.error || 'API request failed')
-          }
-
-          console.log('Approve API success:', result)
-          apiSuccess = true
-          
-        } catch (apiError) {
-          console.error('API call failed, trying direct Supabase:', apiError)
-          apiSuccess = false
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
+          throw new Error(errorData.error || 'API request failed')
         }
-        
-        // 2️⃣ Fallback: Direct Supabase approach if API fails
-        if (!apiSuccess) {
-          console.log('Using direct Supabase approach...')
-          
-          // Insert membership directly
-          const { data: membership, error: membershipError } = await supabase
-            .from('corp_memberships')
-            .insert([{ user_id: req.user_id, company_id: req.company_id, role: 'employee' }])
-            .select()
 
-          if (membershipError) {
-            console.error('Direct membership insert error:', membershipError)
-            
-            // Handle duplicate gracefully
-            if (membershipError.code === '23505') {
-              console.log('User already a member, continuing...')
-            } else if (membershipError.message.includes('row-level security policy')) {
-              console.log('RLS policy blocking membership creation')
-              setLastError('RLS policy error - need to update database policies')
-              alert('❌ Database security policy is blocking this action. Please run the RLS fix script in Supabase.')
-              return
-            } else {
-              setLastError(JSON.stringify(membershipError))
-              alert(`Failed to add member: ${membershipError.message}`)
-              return
-            }
+        const result = await res.json()
+        console.log('Approve API success:', result)
+        
+        // Send notification to approved user
+        await NotificationService.notifyJoinApproved(
+          req.company_id,
+          req.user_id,
+          req.corp_profiles?.full_name || 'New Member'
+        )
+
+        // Update UI + local state
+        setRequests((r) => r.filter((x) => x.id !== req.id))
+        setRawRequestsCount((c) => (c !== null ? Math.max(0, c - 1) : c))
+        setLastError(null)
+        alert('✅ Member approved successfully!')
+        
+        // Refresh the requests list to ensure UI is up to date
+        setTimeout(() => {
+          console.log('Refreshing requests list...')
+          fetchRequestsForCompanyIds(ownedCompanyIdsRef.current)
+        }, 1000)
+        
+      } catch (apiError) {
+        console.error('API call failed:', apiError)
+        
+        // Fallback: Direct Supabase approach
+        console.log('Using direct Supabase approach...')
+        
+        // Insert membership directly
+        const { data: membership, error: membershipError } = await supabase
+          .from('corp_memberships')
+          .insert([{ user_id: req.user_id, company_id: req.company_id, role: 'employee' }])
+          .select()
+
+        if (membershipError) {
+          console.error('Direct membership insert error:', membershipError)
+          
+          // Handle duplicate gracefully
+          if (membershipError.code === '23505') {
+            console.log('User already a member, continuing...')
+          } else if (membershipError.message.includes('row-level security policy')) {
+            console.log('RLS policy blocking membership creation')
+            setLastError('RLS policy error - need to update database policies')
+            alert('❌ Database security policy is blocking this action. Please run the RLS fix script in Supabase.')
+            return
           } else {
-            console.log('Direct membership created:', membership)
+            setLastError(JSON.stringify(membershipError))
+            alert(`Failed to add member: ${membershipError.message}`)
+            return
           }
+        } else {
+          console.log('Direct membership created:', membership)
         }
 
-        // 3️⃣ Delete join request (CEO's session allowed by RLS)
+        // Delete join request (CEO's session allowed by RLS)
         console.log('Attempting to delete join request:', req.id)
         const { error: delErr } = await supabase
           .from('corp_join_requests')
@@ -413,30 +424,32 @@ export default function CeoDashboard() {
 
         console.log('Join request deleted successfully')
 
-        // 4️⃣ Send notification to approved user
+        // Send notification to approved user
         await NotificationService.notifyJoinApproved(
           req.company_id,
           req.user_id,
           req.corp_profiles?.full_name || 'New Member'
         )
 
-        // 5️⃣ Update UI + local state
+        // Update UI + local state
         setRequests((r) => r.filter((x) => x.id !== req.id))
         setRawRequestsCount((c) => (c !== null ? Math.max(0, c - 1) : c))
         setLastError(null)
         alert('✅ Member approved successfully!')
         
-        // 6️⃣ Refresh the requests list to ensure UI is up to date
+        // Refresh the requests list to ensure UI is up to date
         setTimeout(() => {
           console.log('Refreshing requests list...')
-          fetchRequestsForCompanyIds(companyIds)
+          fetchRequestsForCompanyIds(ownedCompanyIdsRef.current)
         }, 1000)
-  } catch (err) {
-    console.error('approve exception', err)
-    setLastError(String(err))
-    alert('Unexpected error approving request')
+      }
+      
+    } catch (err) {
+      console.error('approve exception', err)
+      setLastError(String(err))
+      alert('Unexpected error approving request')
+    }
   }
-}
 
 
   const deny = async (req) => {
@@ -459,6 +472,16 @@ export default function CeoDashboard() {
   const logout = async () => {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <LoadingSpinner size="large" />
+        </div>
+      </Layout>
+    )
   }
 
   return (
@@ -797,6 +820,40 @@ export default function CeoDashboard() {
                   <strong>Error:</strong> {lastError}
                 </div>
               )}
+              <div className="pt-2 space-y-1">
+                <Button
+                  onClick={() => {
+                    setLoading(true)
+                    window.location.reload()
+                  }}
+                  variant="outline"
+                  size="small"
+                  className="text-xs w-full"
+                >
+                  🔄 Refresh Data
+                </Button>
+                <Button
+                  onClick={async () => {
+                    console.log('=== DEBUG: Checking join requests in database ===')
+                    if (ownedCompanyIdsRef.current.length > 0) {
+                      const { data, error } = await supabase
+                        .from('corp_join_requests')
+                        .select('*')
+                        .in('company_id', ownedCompanyIdsRef.current)
+                      console.log('Raw join requests in DB:', data)
+                      console.log('Error:', error)
+                      alert(`Found ${data?.length || 0} join requests in database. Check console for details.`)
+                    } else {
+                      alert('No company IDs available')
+                    }
+                  }}
+                  variant="outline"
+                  size="small"
+                  className="text-xs w-full"
+                >
+                  🔍 Debug DB
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}

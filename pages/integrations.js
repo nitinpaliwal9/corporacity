@@ -1,212 +1,201 @@
-// pages/integrations.js - Integrations and API Management
-'use client'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
-import { motion } from 'framer-motion'
-import supabase from '../lib/supabaseClient'
-import Layout from '../components/ui/Layout'
-import Button from '../components/ui/Button'
-import Card from '../components/ui/Card'
-import Input from '../components/ui/Input'
-import Alert from '../components/ui/Alert'
-import LoadingSpinner from '../components/ui/LoadingSpinner'
-import Badge from '../components/ui/Badge'
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import Layout from '../components/ui/Layout';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import supabase from '../lib/supabaseClient';
 
-export default function IntegrationsPage() {
-  const [integrations, setIntegrations] = useState([])
-  const [apiKeys, setApiKeys] = useState([])
-  const [company, setCompany] = useState(null)
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('webhooks')
-  const [showAddWebhook, setShowAddWebhook] = useState(false)
-  const [webhookForm, setWebhookForm] = useState({
-    name: '',
-    url: '',
-    events: [],
-    secret: ''
-  })
-  const router = useRouter()
+export default function Integrations() {
+  const [user, setUser] = useState(null);
+  const [companyId, setCompanyId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [integrations, setIntegrations] = useState([]);
+  const [connectedApps, setConnectedApps] = useState([]);
+  const [workflows, setWorkflows] = useState([]);
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Get current user
-        const { data: { user: currentUser } } = await supabase.auth.getUser()
-        if (!currentUser) {
-          router.push('/')
-          return
-        }
-        setUser(currentUser)
-
-        // Check if user is company owner
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUser(user);
+        
+        // Get user's company
         const { data: membership } = await supabase
           .from('corp_memberships')
-          .select(`
-            company_id,
-            role,
-            corp_companies!inner(id, name, code, owner_id)
-          `)
-          .eq('user_id', currentUser.id)
-          .single()
-
-        if (!membership || membership.role !== 'owner') {
-          setError('Access denied. Only company owners can manage integrations.')
-          return
+          .select('company_id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (membership) {
+          setCompanyId(membership.company_id);
+          await loadIntegrationData(membership.company_id);
         }
-
-        setCompany(membership.corp_companies)
-
-        // Load integrations data
-        await loadIntegrations(membership.company_id)
-      } catch (err) {
-        console.error('Error loading integrations data:', err)
-        setError('Failed to load integrations data')
-      } finally {
-        setLoading(false)
       }
-    }
+      setLoading(false);
+    };
 
-    loadData()
-  }, [router])
+    getUser();
+  }, []);
 
-  const loadIntegrations = async (companyId) => {
+  const loadIntegrationData = async (companyId) => {
     try {
-      // Load webhooks
-      const { data: webhooks } = await supabase
-        .from('corp_webhooks')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
+      // Mock integration data
+      const mockIntegrations = [
+        {
+          id: 1,
+          name: 'Salesforce',
+          category: 'CRM',
+          description: 'Sync team status with customer interactions and sales pipeline',
+          icon: '☁️',
+          status: 'available',
+          features: ['Lead tracking', 'Customer status sync', 'Sales analytics'],
+          color: 'from-blue-500 to-indigo-600'
+        },
+        {
+          id: 2,
+          name: 'Slack',
+          category: 'Communication',
+          description: 'Automated status updates and team notifications',
+          icon: '💬',
+          status: 'connected',
+          features: ['Status broadcasting', 'Team notifications', 'Channel updates'],
+          color: 'from-purple-500 to-violet-600'
+        },
+        {
+          id: 3,
+          name: 'Jira',
+          category: 'Project Management',
+          description: 'Link team availability with project timelines and sprints',
+          icon: '🎯',
+          status: 'available',
+          features: ['Sprint planning', 'Task assignment', 'Progress tracking'],
+          color: 'from-blue-500 to-cyan-600'
+        },
+        {
+          id: 4,
+          name: 'Microsoft Teams',
+          category: 'Communication',
+          description: 'Seamless integration with Teams meetings and presence',
+          icon: '👥',
+          status: 'available',
+          features: ['Meeting sync', 'Presence status', 'Calendar integration'],
+          color: 'from-indigo-500 to-blue-600'
+        },
+        {
+          id: 5,
+          name: 'Asana',
+          category: 'Project Management',
+          description: 'Connect team status with project milestones and deadlines',
+          icon: '📋',
+          status: 'available',
+          features: ['Project tracking', 'Milestone sync', 'Team coordination'],
+          color: 'from-red-500 to-pink-600'
+        },
+        {
+          id: 6,
+          name: 'HubSpot',
+          category: 'CRM',
+          description: 'Integrate team performance with customer success metrics',
+          icon: '🎯',
+          status: 'available',
+          features: ['Customer insights', 'Performance tracking', 'Success metrics'],
+          color: 'from-orange-500 to-red-600'
+        },
+        {
+          id: 7,
+          name: 'Google Workspace',
+          category: 'Productivity',
+          description: 'Sync with Google Calendar, Drive, and Gmail for seamless workflow',
+          icon: '📧',
+          status: 'available',
+          features: ['Calendar sync', 'Drive integration', 'Email automation'],
+          color: 'from-green-500 to-emerald-600'
+        },
+        {
+          id: 8,
+          name: 'Monday.com',
+          category: 'Project Management',
+          description: 'Connect team status with Monday.com boards and workflows',
+          icon: '📊',
+          status: 'available',
+          features: ['Board updates', 'Workflow automation', 'Progress tracking'],
+          color: 'from-pink-500 to-rose-600'
+        }
+      ];
 
-      // Load API keys
-      const { data: keys } = await supabase
-        .from('corp_api_keys')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
+      const mockConnectedApps = [
+        {
+          id: 1,
+          name: 'Slack',
+          status: 'active',
+          lastSync: '2 minutes ago',
+          dataPoints: 1247,
+          icon: '💬',
+          color: 'from-purple-500 to-violet-600'
+        }
+      ];
 
-      setIntegrations(webhooks || [])
-      setApiKeys(keys || [])
-    } catch (err) {
-      console.error('Error loading integrations:', err)
+      const mockWorkflows = [
+        {
+          id: 1,
+          name: 'Daily Status to Slack',
+          description: 'Automatically post daily team status updates to #general channel',
+          trigger: 'Daily at 9:00 AM',
+          status: 'active',
+          integrations: ['Slack'],
+          executions: 47
+        },
+        {
+          id: 2,
+          name: 'Absence Alert to Manager',
+          description: 'Notify managers when team members are absent or late',
+          trigger: 'Real-time',
+          status: 'active',
+          integrations: ['Slack', 'Email'],
+          executions: 12
+        },
+        {
+          id: 3,
+          name: 'Weekly Report Generation',
+          description: 'Generate and send weekly team performance reports',
+          trigger: 'Every Friday 5:00 PM',
+          status: 'active',
+          integrations: ['Email', 'Google Drive'],
+          executions: 8
+        }
+      ];
+
+      setIntegrations(mockIntegrations);
+      setConnectedApps(mockConnectedApps);
+      setWorkflows(mockWorkflows);
+    } catch (error) {
+      console.error('Error loading integration data:', error);
     }
-  }
+  };
 
-  const addWebhook = async () => {
-    if (!company || !webhookForm.name || !webhookForm.url) {
-      setError('Please fill in all required fields')
-      return
-    }
-
-    try {
-      const { error } = await supabase
-        .from('corp_webhooks')
-        .insert([{
-          company_id: company.id,
-          name: webhookForm.name,
-          url: webhookForm.url,
-          events: webhookForm.events,
-          secret: webhookForm.secret || null,
-          is_active: true
-        }])
-
-      if (error) {
-        console.error('Error adding webhook:', error)
-        setError('Failed to add webhook')
-        return
-      }
-
-      setShowAddWebhook(false)
-      setWebhookForm({ name: '', url: '', events: [], secret: '' })
-      await loadIntegrations(company.id)
-    } catch (err) {
-      console.error('Error adding webhook:', err)
-      setError('Failed to add webhook')
-    }
-  }
-
-  const toggleWebhook = async (webhookId, isActive) => {
-    try {
-      const { error } = await supabase
-        .from('corp_webhooks')
-        .update({ is_active: !isActive })
-        .eq('id', webhookId)
-
-      if (error) {
-        console.error('Error toggling webhook:', error)
-        setError('Failed to update webhook')
-        return
-      }
-
-      await loadIntegrations(company.id)
-    } catch (err) {
-      console.error('Error toggling webhook:', err)
-      setError('Failed to update webhook')
-    }
-  }
-
-  const deleteWebhook = async (webhookId) => {
-    if (!confirm('Are you sure you want to delete this webhook?')) {
-      return
-    }
-
-    try {
-      const { error } = await supabase
-        .from('corp_webhooks')
-        .delete()
-        .eq('id', webhookId)
-
-      if (error) {
-        console.error('Error deleting webhook:', error)
-        setError('Failed to delete webhook')
-        return
-      }
-
-      await loadIntegrations(company.id)
-    } catch (err) {
-      console.error('Error deleting webhook:', err)
-      setError('Failed to delete webhook')
-    }
-  }
-
-  const generateApiKey = async () => {
-    try {
-      const keyName = prompt('Enter a name for this API key:')
-      if (!keyName) return
-
-      const apiKey = `ck_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
-
-      const { error } = await supabase
-        .from('corp_api_keys')
-        .insert([{
-          company_id: company.id,
-          name: keyName,
-          key: apiKey,
-          is_active: true
-        }])
-
-      if (error) {
-        console.error('Error generating API key:', error)
-        setError('Failed to generate API key')
-        return
-      }
-
-      await loadIntegrations(company.id)
-      alert(`API Key generated: ${apiKey}\n\nPlease save this key securely. You won't be able to see it again.`)
-    } catch (err) {
-      console.error('Error generating API key:', err)
-      setError('Failed to generate API key')
-    }
-  }
-
-  const getStatusBadge = (isActive) => {
+  if (loading) {
     return (
-      <Badge variant={isActive ? 'success' : 'secondary'} size="small">
-        {isActive ? '✅ Active' : '⏸️ Inactive'}
-      </Badge>
-    )
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <LoadingSpinner size="large" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user || !companyId) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+            <p className="text-gray-600 mb-8">You need to be part of a company to view integrations.</p>
+            <Button href="/create-company">Create Company</Button>
+          </div>
+        </div>
+      </Layout>
+    );
   }
 
   const containerVariants = {
@@ -217,401 +206,188 @@ export default function IntegrationsPage() {
         staggerChildren: 0.1
       }
     }
-  }
+  };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: 'easeOut'
-      }
-    }
-  }
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <LoadingSpinner size="large" />
-        </div>
-      </Layout>
-    )
-  }
-
-  if (error) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <Alert variant="error">
-            <div className="text-center">
-              <h3 className="font-semibold mb-2">Access Denied</h3>
-              <p className="text-sm">{error}</p>
-              <Button
-                onClick={() => router.push('/ceo')}
-                className="mt-4"
-                variant="outline"
-              >
-                Back to Dashboard
-              </Button>
-            </div>
-          </Alert>
-        </div>
-      </Layout>
-    )
-  }
+    visible: { opacity: 1, y: 0 }
+  };
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 p-6">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="max-w-7xl mx-auto"
-        >
-          {/* Header */}
-          <motion.div variants={itemVariants} className="mb-8">
-            <div className="flex items-center justify-between">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        {/* Header */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-between"
+            >
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  🔗 Integrations & API
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                  Enterprise Integrations
                 </h1>
-                <p className="text-gray-600">
-                  {company?.name} • Connect with external services
-                </p>
+                <p className="text-gray-600 mt-1">Connect Corporacity with your favorite tools and automate workflows</p>
               </div>
-              <Button
-                onClick={() => router.push('/ceo')}
-                variant="outline"
-              >
-                ← Back to Dashboard
-              </Button>
-            </div>
-          </motion.div>
-
-          {/* Tabs */}
-          <motion.div variants={itemVariants} className="mb-6">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8">
-                {[
-                  { id: 'webhooks', label: 'Webhooks', icon: '🔗' },
-                  { id: 'api', label: 'API Keys', icon: '🔑' },
-                  { id: 'docs', label: 'API Documentation', icon: '📚' }
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    {tab.icon} {tab.label}
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </motion.div>
-
-          {/* Webhooks Tab */}
-          {activeTab === 'webhooks' && (
-            <motion.div variants={itemVariants}>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Webhooks</h2>
-                <Button
-                  onClick={() => setShowAddWebhook(true)}
-                  variant="primary"
-                >
-                  ➕ Add Webhook
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span>API Active</span>
+                </div>
+                <Button variant="outline" size="small">
+                  Create Workflow
                 </Button>
               </div>
+            </motion.div>
+          </div>
+        </div>
 
-              {integrations.length === 0 ? (
-                <Card>
-                  <Card.Content>
-                    <div className="text-center py-8">
-                      <div className="text-4xl mb-4">🔗</div>
-                      <p className="text-gray-500">No webhooks configured</p>
-                      <p className="text-sm text-gray-400 mt-2">
-                        Webhooks allow you to receive real-time notifications when events occur in your company.
-                      </p>
-                    </div>
-                  </Card.Content>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {integrations.map((webhook) => (
-                    <Card key={webhook.id}>
-                      <Card.Content>
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="font-semibold text-gray-900">
-                                {webhook.name}
-                              </h3>
-                              {getStatusBadge(webhook.is_active)}
-                            </div>
-                            <p className="text-sm text-gray-600 mb-2">
-                              {webhook.url}
-                            </p>
-                            <div className="flex items-center space-x-4 text-xs text-gray-500">
-                              <span>Events: {webhook.events?.join(', ') || 'All'}</span>
-                              <span>Created: {new Date(webhook.created_at).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button
-                              onClick={() => toggleWebhook(webhook.id, webhook.is_active)}
-                              variant="outline"
-                              size="small"
-                            >
-                              {webhook.is_active ? 'Disable' : 'Enable'}
-                            </Button>
-                            <Button
-                              onClick={() => deleteWebhook(webhook.id)}
-                              variant="error"
-                              size="small"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      </Card.Content>
-                    </Card>
-                  ))}
-                </div>
-              )}
-
-              {/* Add Webhook Modal */}
-              {showAddWebhook && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <Card className="w-full max-w-md">
-                    <Card.Header>
-                      <Card.Title>Add Webhook</Card.Title>
-                    </Card.Header>
-                    <Card.Content>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Name
-                          </label>
-                          <Input
-                            value={webhookForm.name}
-                            onChange={(e) => setWebhookForm({ ...webhookForm, name: e.target.value })}
-                            placeholder="e.g., Slack Notifications"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Webhook URL
-                          </label>
-                          <Input
-                            value={webhookForm.url}
-                            onChange={(e) => setWebhookForm({ ...webhookForm, url: e.target.value })}
-                            placeholder="https://hooks.slack.com/services/..."
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Events (optional)
-                          </label>
-                          <div className="space-y-2">
-                            {['status_update', 'member_joined', 'member_left', 'company_created'].map((event) => (
-                              <label key={event} className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  checked={webhookForm.events.includes(event)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setWebhookForm({ ...webhookForm, events: [...webhookForm.events, event] })
-                                    } else {
-                                      setWebhookForm({ ...webhookForm, events: webhookForm.events.filter(ev => ev !== event) })
-                                    }
-                                  }}
-                                  className="mr-2"
-                                />
-                                <span className="text-sm">{event.replace('_', ' ')}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Secret (optional)
-                          </label>
-                          <Input
-                            value={webhookForm.secret}
-                            onChange={(e) => setWebhookForm({ ...webhookForm, secret: e.target.value })}
-                            placeholder="Webhook secret for verification"
-                          />
-                        </div>
-                        <div className="flex justify-end space-x-3">
-                          <Button
-                            onClick={() => setShowAddWebhook(false)}
-                            variant="outline"
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={addWebhook}
-                            variant="primary"
-                          >
-                            Add Webhook
-                          </Button>
-                        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-8"
+          >
+            {/* Connected Apps */}
+            <motion.div variants={itemVariants}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Connected Apps</h2>
+                <p className="text-gray-600">Currently active integrations</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {connectedApps.map((app, index) => (
+                  <Card key={app.id} className="p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-16 h-16 bg-gradient-to-br ${app.color} rounded-2xl flex items-center justify-center shadow-lg`}>
+                        <span className="text-white text-2xl">{app.icon}</span>
                       </div>
-                    </Card.Content>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 mb-1">{app.name}</h3>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm text-green-600 font-medium">{app.status}</span>
+                        </div>
+                        <p className="text-xs text-gray-500">Last sync: {app.lastSync}</p>
+                        <p className="text-xs text-gray-500">{app.dataPoints} data points synced</p>
+                      </div>
+                    </div>
                   </Card>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* API Keys Tab */}
-          {activeTab === 'api' && (
-            <motion.div variants={itemVariants}>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">API Keys</h2>
-                <Button
-                  onClick={generateApiKey}
-                  variant="primary"
-                >
-                  🔑 Generate API Key
-                </Button>
+                ))}
               </div>
-
-              {apiKeys.length === 0 ? (
-                <Card>
-                  <Card.Content>
-                    <div className="text-center py-8">
-                      <div className="text-4xl mb-4">🔑</div>
-                      <p className="text-gray-500">No API keys generated</p>
-                      <p className="text-sm text-gray-400 mt-2">
-                        API keys allow you to access Corporacity data programmatically.
-                      </p>
-                    </div>
-                  </Card.Content>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {apiKeys.map((key) => (
-                    <Card key={key.id}>
-                      <Card.Content>
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="font-semibold text-gray-900">
-                                {key.name}
-                              </h3>
-                              {getStatusBadge(key.is_active)}
-                            </div>
-                            <p className="text-sm text-gray-600 mb-2 font-mono">
-                              {key.key.substring(0, 8)}...{key.key.substring(key.key.length - 8)}
-                            </p>
-                            <div className="flex items-center space-x-4 text-xs text-gray-500">
-                              <span>Created: {new Date(key.created_at).toLocaleDateString()}</span>
-                              <span>Last used: {key.last_used ? new Date(key.last_used).toLocaleDateString() : 'Never'}</span>
-                            </div>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="outline"
-                              size="small"
-                            >
-                              Regenerate
-                            </Button>
-                            <Button
-                              variant="error"
-                              size="small"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      </Card.Content>
-                    </Card>
-                  ))}
-                </div>
-              )}
             </motion.div>
-          )}
 
-          {/* API Documentation Tab */}
-          {activeTab === 'docs' && (
+            {/* Available Integrations */}
             <motion.div variants={itemVariants}>
-              <Card>
-                <Card.Header>
-                  <Card.Title>API Documentation</Card.Title>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Learn how to integrate with Corporacity using our REST API
-                  </p>
-                </Card.Header>
-                <Card.Content>
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Base URL</h3>
-                      <code className="bg-gray-100 px-3 py-2 rounded text-sm">
-                        {typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api
-                      </code>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Authentication</h3>
-                      <p className="text-sm text-gray-600 mb-2">
-                        Include your API key in the Authorization header:
-                      </p>
-                      <code className="bg-gray-100 px-3 py-2 rounded text-sm block">
-                        Authorization: Bearer YOUR_API_KEY
-                      </code>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Endpoints</h3>
-                      <div className="space-y-3">
-                        <div className="border border-gray-200 rounded p-3">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Badge variant="success" size="small">GET</Badge>
-                            <code className="text-sm">/export?company_id=xxx&type=attendance&format=json</code>
-                          </div>
-                          <p className="text-sm text-gray-600">Export company data in JSON or CSV format</p>
-                        </div>
-                        <div className="border border-gray-200 rounded p-3">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Badge variant="primary" size="small">POST</Badge>
-                            <code className="text-sm">/webhook</code>
-                          </div>
-                          <p className="text-sm text-gray-600">Send webhook events to external services</p>
-                        </div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Available Integrations</h2>
+                <p className="text-gray-600">Connect with 50+ popular business tools</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {integrations.map((integration, index) => (
+                  <Card key={integration.id} className="p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm group">
+                    <div className="text-center">
+                      <div className={`w-16 h-16 bg-gradient-to-br ${integration.color} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110`}>
+                        <span className="text-white text-2xl">{integration.icon}</span>
                       </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Webhook Events</h3>
-                      <div className="space-y-2">
-                        {[
-                          { event: 'status_update', description: 'When a user updates their status' },
-                          { event: 'member_joined', description: 'When a new member joins the company' },
-                          { event: 'member_left', description: 'When a member leaves the company' },
-                          { event: 'company_created', description: 'When a new company is created' }
-                        ].map((item) => (
-                          <div key={item.event} className="flex items-center space-x-3">
-                            <code className="text-sm bg-gray-100 px-2 py-1 rounded">{item.event}</code>
-                            <span className="text-sm text-gray-600">{item.description}</span>
+                      <h3 className="font-semibold text-gray-900 mb-2">{integration.name}</h3>
+                      <div className="text-xs text-blue-600 font-semibold mb-2">{integration.category}</div>
+                      <p className="text-sm text-gray-600 mb-4">{integration.description}</p>
+                      <div className="space-y-1 mb-4">
+                        {integration.features.slice(0, 2).map((feature, idx) => (
+                          <div key={idx} className="text-xs text-gray-500 flex items-center">
+                            <div className="w-1 h-1 bg-blue-500 rounded-full mr-2"></div>
+                            {feature}
                           </div>
                         ))}
                       </div>
+                      <Button 
+                        size="small" 
+                        variant={integration.status === 'connected' ? 'outline' : 'primary'}
+                        className="w-full"
+                      >
+                        {integration.status === 'connected' ? 'Manage' : 'Connect'}
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Automated Workflows */}
+            <motion.div variants={itemVariants}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Automated Workflows</h2>
+                <p className="text-gray-600">AI-powered automation to streamline your processes</p>
+              </div>
+              <div className="space-y-4">
+                {workflows.map((workflow, index) => (
+                  <Card key={workflow.id} className="p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+                          <span className="text-white text-xl">⚡</span>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 mb-1">{workflow.name}</h3>
+                          <p className="text-sm text-gray-600 mb-2">{workflow.description}</p>
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            <span>Trigger: {workflow.trigger}</span>
+                            <span>Executions: {workflow.executions}</span>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="text-green-600 font-medium">{workflow.status}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex space-x-1">
+                          {workflow.integrations.map((integration, idx) => (
+                            <div key={idx} className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                              <span className="text-xs text-gray-600">{integration.charAt(0)}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <Button size="small" variant="outline">
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Integration Benefits */}
+            <motion.div variants={itemVariants}>
+              <Card className="p-8 bg-gradient-to-br from-blue-50 to-indigo-50 border-0 shadow-xl">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <span className="text-white text-2xl">🔗</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Why Integrate?</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                    <div className="bg-white/70 p-4 rounded-xl">
+                      <h4 className="font-semibold text-gray-900 mb-2">Seamless Workflow</h4>
+                      <p className="text-sm text-gray-600">Eliminate manual data entry and keep all your tools in sync automatically</p>
+                    </div>
+                    <div className="bg-white/70 p-4 rounded-xl">
+                      <h4 className="font-semibold text-gray-900 mb-2">Enhanced Productivity</h4>
+                      <p className="text-sm text-gray-600">Save 2+ hours per week with automated status updates and notifications</p>
+                    </div>
+                    <div className="bg-white/70 p-4 rounded-xl">
+                      <h4 className="font-semibold text-gray-900 mb-2">Better Insights</h4>
+                      <p className="text-sm text-gray-600">Combine team data with project metrics for comprehensive business intelligence</p>
                     </div>
                   </div>
-                </Card.Content>
+                </div>
               </Card>
             </motion.div>
-          )}
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </Layout>
-  )
+  );
 }

@@ -96,11 +96,27 @@ export default async function handler(req, res) {
 
     console.log('Membership created successfully:', membership)
 
+    // Now delete the join request
+    const { error: deleteError } = await supabaseAdmin
+      .from('corp_join_requests')
+      .delete()
+      .eq('user_id', user_id)
+      .eq('company_id', company_id)
+
+    if (deleteError) {
+      console.error('Join request deletion error:', deleteError)
+      // Don't fail the whole request if deletion fails - membership was created
+      console.warn('Membership created but failed to delete join request')
+    } else {
+      console.log('Join request deleted successfully')
+    }
+
     // Success response
     return res.status(200).json({ 
       success: true, 
       message: 'Member approved successfully',
       membership_created: true,
+      join_request_deleted: !deleteError,
       data: membership
     })
 

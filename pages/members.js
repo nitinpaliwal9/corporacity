@@ -68,32 +68,61 @@ export default function MembersDirectory() {
 
   const fetchMembers = async (companyId) => {
     try {
-      const { data, error } = await supabase
+      // First, get all memberships for the company
+      const { data: memberships, error: membershipsError } = await supabase
         .from('corp_memberships')
         .select(`
           id,
           user_id,
           role,
-          created_at,
-          corp_profiles!inner(
-            id,
-            full_name,
-            email,
-            phone
-          )
+          created_at
         `)
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('Error fetching members:', error)
+      if (membershipsError) {
+        console.error('Error fetching memberships:', membershipsError)
         setError('Failed to fetch members')
         return
       }
 
+      if (!memberships || memberships.length === 0) {
+        setMembers([])
+        return
+      }
+
+      // Get user IDs from memberships
+      const userIds = memberships.map(m => m.user_id)
+
+      // Fetch profiles for all users
+      const { data: profiles, error: profilesError } = await supabase
+        .from('corp_profiles')
+        .select(`
+          id,
+          full_name,
+          email,
+          phone
+        `)
+        .in('id', userIds)
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError)
+        setError('Failed to fetch member profiles')
+        return
+      }
+
+      // Combine memberships with profiles
+      const membersWithProfiles = memberships.map(membership => {
+        const profile = profiles?.find(p => p.id === membership.user_id)
+        return {
+          ...membership,
+          corp_profiles: profile || { id: membership.user_id, full_name: null, email: null, phone: null }
+        }
+      })
+
       // Get current status for each member
       const membersWithStatus = await Promise.all(
-        (data || []).map(async (member) => {
+        membersWithProfiles.map(async (member) => {
           const today = new Date()
           const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
           

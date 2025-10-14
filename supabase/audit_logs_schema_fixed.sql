@@ -1,6 +1,5 @@
 -- Audit Logs and Security schema - FIXED VERSION
 -- This creates the audit logs table for security monitoring
-
 -- Create audit logs table
 CREATE TABLE IF NOT EXISTS corp_audit_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

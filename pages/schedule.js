@@ -1,224 +1,157 @@
-// pages/schedule.js - Scheduling and Calendar Management
-'use client'
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
-import { motion } from 'framer-motion'
-import supabase from '../lib/supabaseClient'
-import Layout from '../components/ui/Layout'
-import Button from '../components/ui/Button'
-import Card from '../components/ui/Card'
-import Input from '../components/ui/Input'
-import Alert from '../components/ui/Alert'
-import LoadingSpinner from '../components/ui/LoadingSpinner'
-import Modal from '../components/ui/Modal'
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import Layout from '../components/ui/Layout';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import supabase from '../lib/supabaseClient';
 
-export default function SchedulePage() {
-  const [schedules, setSchedules] = useState([])
-  const [leaveRequests, setLeaveRequests] = useState([])
-  const [company, setCompany] = useState(null)
-  const [user, setUser] = useState(null)
-  const [userRole, setUserRole] = useState('employee')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [showLeaveModal, setShowLeaveModal] = useState(false)
-  const [showScheduleModal, setShowScheduleModal] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(new Date())
-  const [leaveForm, setLeaveForm] = useState({
-    start_date: '',
-    end_date: '',
-    reason: '',
-    type: 'sick'
-  })
-  const [scheduleForm, setScheduleForm] = useState({
-    date: '',
-    start_time: '09:00',
-    end_time: '17:00',
-    type: 'work'
-  })
-  const router = useRouter()
+export default function Schedule() {
+  const [user, setUser] = useState(null);
+  const [companyId, setCompanyId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [schedules, setSchedules] = useState([]);
+  const [aiRecommendations, setAiRecommendations] = useState([]);
+  const [teamAvailability, setTeamAvailability] = useState({});
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Get current user
-        const { data: { user: currentUser } } = await supabase.auth.getUser()
-        if (!currentUser) {
-          router.push('/')
-          return
-        }
-        setUser(currentUser)
-
-        // Get user's company and role
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUser(user);
+        
+        // Get user's company
         const { data: membership } = await supabase
           .from('corp_memberships')
-          .select(`
-            company_id,
-            role,
-            corp_companies!inner(id, name, code, owner_id)
-          `)
-          .eq('user_id', currentUser.id)
-          .single()
-
-        if (!membership) {
-          setError('You are not a member of any company')
-          return
+          .select('company_id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (membership) {
+          setCompanyId(membership.company_id);
+          await loadScheduleData(membership.company_id);
         }
-
-        setCompany(membership.corp_companies)
-        setUserRole(membership.role)
-
-        // Load schedules and leave requests
-        await Promise.all([
-          loadSchedules(membership.company_id),
-          loadLeaveRequests(membership.company_id, membership.role, currentUser.id)
-        ])
-      } catch (err) {
-        console.error('Error loading schedule data:', err)
-        setError('Failed to load schedule data')
-      } finally {
-        setLoading(false)
       }
-    }
+      setLoading(false);
+    };
 
-    loadData()
-  }, [router])
+    getUser();
+  }, []);
 
-  const loadSchedules = async (companyId) => {
+  const loadScheduleData = async (companyId) => {
     try {
-      const { data, error } = await supabase
-        .from('corp_schedules')
-        .select(`
-          *,
-          corp_profiles!inner(full_name, email)
-        `)
-        .eq('company_id', companyId)
-        .gte('date', new Date().toISOString().split('T')[0])
-        .order('date', { ascending: true })
+      // Mock AI-powered scheduling data
+      const mockSchedules = [
+        {
+          id: 1,
+          title: 'Weekly Team Sync',
+          time: '10:00 AM',
+          duration: 60,
+          participants: ['John Doe', 'Sarah Chen', 'Mike Rodriguez'],
+          aiScore: 92,
+          reason: 'Optimal energy levels and availability',
+          type: 'recurring'
+        },
+        {
+          id: 2,
+          title: 'Project Review',
+          time: '2:00 PM',
+          duration: 90,
+          participants: ['Sarah Chen', 'Emily Johnson', 'Alex Kim'],
+          aiScore: 78,
+          reason: 'Good focus time, but consider morning slot',
+          type: 'one-time'
+        },
+        {
+          id: 3,
+          title: 'Client Meeting',
+          time: '11:30 AM',
+          duration: 45,
+          participants: ['John Doe', 'Sarah Chen'],
+          aiScore: 95,
+          reason: 'Peak productivity window identified',
+          type: 'external'
+        }
+      ];
 
-      if (error) {
-        console.error('Error loading schedules:', error)
-        return
-      }
+      const mockRecommendations = [
+        {
+          id: 1,
+          type: 'optimization',
+          title: 'Reschedule Friday Afternoon Meetings',
+          description: 'Move 3 PM meetings to 10 AM for 23% better engagement',
+          impact: 'high',
+          confidence: 89,
+          action: 'Reschedule'
+        },
+        {
+          id: 2,
+          type: 'wellness',
+          title: 'Add Buffer Time Between Meetings',
+          description: 'Current back-to-back meetings reduce productivity by 15%',
+          impact: 'medium',
+          confidence: 76,
+          action: 'Add Buffers'
+        },
+        {
+          id: 3,
+          type: 'efficiency',
+          title: 'Optimize Meeting Duration',
+          description: 'Reduce meeting length by 15 minutes for 20% better focus',
+          impact: 'medium',
+          confidence: 82,
+          action: 'Optimize'
+        }
+      ];
 
-      setSchedules(data || [])
-    } catch (err) {
-      console.error('Error loading schedules:', err)
+      const mockAvailability = {
+        'John Doe': {
+          energy: { morning: 95, afternoon: 78, evening: 45 },
+          focus: { morning: 92, afternoon: 65, evening: 30 },
+          availability: ['9:00-12:00', '14:00-17:00']
+        },
+        'Sarah Chen': {
+          energy: { morning: 88, afternoon: 92, evening: 70 },
+          focus: { morning: 85, afternoon: 95, evening: 60 },
+          availability: ['8:00-11:00', '13:00-18:00']
+        },
+        'Mike Rodriguez': {
+          energy: { morning: 75, afternoon: 85, evening: 90 },
+          focus: { morning: 70, afternoon: 88, evening: 85 },
+          availability: ['10:00-13:00', '15:00-19:00']
+        }
+      };
+
+      setSchedules(mockSchedules);
+      setAiRecommendations(mockRecommendations);
+      setTeamAvailability(mockAvailability);
+    } catch (error) {
+      console.error('Error loading schedule data:', error);
     }
-  }
+  };
 
-  const loadLeaveRequests = async (companyId, role, userId) => {
-    try {
-      let query = supabase
-        .from('corp_leave_requests')
-        .select(`
-          *,
-          corp_profiles!inner(full_name, email)
-        `)
-        .eq('company_id', companyId)
-
-      // If user is not owner/manager, only show their own requests
-      if (role === 'employee') {
-        query = query.eq('user_id', userId)
-      }
-
-      const { data, error } = await query
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('Error loading leave requests:', error)
-        return
-      }
-
-      setLeaveRequests(data || [])
-    } catch (err) {
-      console.error('Error loading leave requests:', err)
-    }
-  }
-
-  const submitLeaveRequest = async () => {
-    if (!user || !company) return
-
-    try {
-      const { error } = await supabase
-        .from('corp_leave_requests')
-        .insert([{
-          user_id: user.id,
-          company_id: company.id,
-          start_date: leaveForm.start_date,
-          end_date: leaveForm.end_date,
-          reason: leaveForm.reason,
-          type: leaveForm.type,
-          status: 'pending'
-        }])
-
-      if (error) {
-        console.error('Error submitting leave request:', error)
-        setError('Failed to submit leave request')
-        return
-      }
-
-      setShowLeaveModal(false)
-      setLeaveForm({ start_date: '', end_date: '', reason: '', type: 'sick' })
-      await loadLeaveRequests(company.id, userRole, user.id)
-    } catch (err) {
-      console.error('Error submitting leave request:', err)
-      setError('Failed to submit leave request')
-    }
-  }
-
-  const approveLeaveRequest = async (requestId, status) => {
-    try {
-      const { error } = await supabase
-        .from('corp_leave_requests')
-        .update({ status })
-        .eq('id', requestId)
-
-      if (error) {
-        console.error('Error updating leave request:', error)
-        setError('Failed to update leave request')
-        return
-      }
-
-      await loadLeaveRequests(company.id, userRole, user.id)
-    } catch (err) {
-      console.error('Error updating leave request:', err)
-      setError('Failed to update leave request')
-    }
-  }
-
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      pending: { variant: 'warning', label: 'Pending', icon: '⏳' },
-      approved: { variant: 'success', label: 'Approved', icon: '✅' },
-      rejected: { variant: 'error', label: 'Rejected', icon: '❌' }
-    }
-    
-    const config = statusConfig[status] || statusConfig.pending
+  if (loading) {
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        config.variant === 'success' ? 'bg-green-100 text-green-800' :
-        config.variant === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-        'bg-red-100 text-red-800'
-      }`}>
-        {config.icon} {config.label}
-      </span>
-    )
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <LoadingSpinner size="large" />
+        </div>
+      </Layout>
+    );
   }
 
-  const getLeaveTypeBadge = (type) => {
-    const typeConfig = {
-      sick: { label: 'Sick Leave', icon: '🤒' },
-      vacation: { label: 'Vacation', icon: '🏖️' },
-      personal: { label: 'Personal', icon: '👤' },
-      emergency: { label: 'Emergency', icon: '🚨' }
-    }
-    
-    const config = typeConfig[type] || typeConfig.personal
+  if (!user || !companyId) {
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-        {config.icon} {config.label}
-      </span>
-    )
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+            <p className="text-gray-600 mb-8">You need to be part of a company to view schedules.</p>
+            <Button href="/create-company">Create Company</Button>
+          </div>
+        </div>
+      </Layout>
+    );
   }
 
   const containerVariants = {
@@ -229,281 +162,214 @@ export default function SchedulePage() {
         staggerChildren: 0.1
       }
     }
-  }
+  };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: 'easeOut'
-      }
-    }
-  }
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <LoadingSpinner size="large" />
-        </div>
-      </Layout>
-    )
-  }
-
-  if (error) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <Alert variant="error">
-            <div className="text-center">
-              <h3 className="font-semibold mb-2">Error Loading Schedule</h3>
-              <p className="text-sm">{error}</p>
-              <Button
-                onClick={() => window.location.reload()}
-                className="mt-4"
-                variant="outline"
-              >
-                Retry
-              </Button>
-            </div>
-          </Alert>
-        </div>
-      </Layout>
-    )
-  }
+    visible: { opacity: 1, y: 0 }
+  };
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="max-w-7xl mx-auto"
-        >
-          {/* Header */}
-          <motion.div variants={itemVariants} className="mb-8">
-            <div className="flex items-center justify-between">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        {/* Header */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center justify-between"
+            >
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Schedule & Leave Management
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                  Smart Scheduling
                 </h1>
-                <p className="text-gray-600">
-                  {company?.name} • Manage schedules and leave requests
-                </p>
+                <p className="text-gray-600 mt-1">AI-optimized meeting times for maximum productivity</p>
               </div>
-              <div className="flex space-x-3">
-                <Button
-                  onClick={() => setShowLeaveModal(true)}
-                  variant="primary"
-                >
-                  📅 Request Leave
-                </Button>
-                {userRole === 'owner' && (
-                  <Button
-                    onClick={() => setShowScheduleModal(true)}
-                    variant="outline"
-                  >
-                    📋 Add Schedule
-                  </Button>
-                )}
-                <Button
-                  onClick={() => router.push('/ceo')}
-                  variant="outline"
-                >
-                  ← Back to Dashboard
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span>AI Active</span>
+                </div>
+                <Button variant="outline" size="small">
+                  Create Meeting
                 </Button>
               </div>
-            </div>
-          </motion.div>
-
-          {/* Leave Requests */}
-          <motion.div variants={itemVariants} className="mb-8">
-            <Card>
-              <Card.Header>
-                <Card.Title>Leave Requests</Card.Title>
-                <p className="text-sm text-gray-600 mt-2">
-                  {userRole === 'owner' ? 'Manage team leave requests' : 'Your leave requests'}
-                </p>
-              </Card.Header>
-              <Card.Content>
-                {leaveRequests.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-4xl mb-4">📅</div>
-                    <p className="text-gray-500">No leave requests found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {leaveRequests.map((request) => (
-                      <div key={request.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="font-semibold text-gray-900">
-                                {request.corp_profiles?.full_name || 'Unknown User'}
-                              </h3>
-                              {getLeaveTypeBadge(request.type)}
-                              {getStatusBadge(request.status)}
-                            </div>
-                            <p className="text-sm text-gray-600 mb-2">
-                              {new Date(request.start_date).toLocaleDateString()} - {new Date(request.end_date).toLocaleDateString()}
-                            </p>
-                            <p className="text-sm text-gray-700">
-                              {request.reason}
-                            </p>
-                          </div>
-                          {userRole === 'owner' && request.status === 'pending' && (
-                            <div className="flex space-x-2">
-                              <Button
-                                onClick={() => approveLeaveRequest(request.id, 'approved')}
-                                variant="success"
-                                size="small"
-                              >
-                                Approve
-                              </Button>
-                              <Button
-                                onClick={() => approveLeaveRequest(request.id, 'rejected')}
-                                variant="error"
-                                size="small"
-                              >
-                                Reject
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card.Content>
-            </Card>
-          </motion.div>
-
-          {/* Upcoming Schedules */}
-          <motion.div variants={itemVariants}>
-            <Card>
-              <Card.Header>
-                <Card.Title>Upcoming Schedules</Card.Title>
-                <p className="text-sm text-gray-600 mt-2">
-                  Team schedules and important dates
-                </p>
-              </Card.Header>
-              <Card.Content>
-                {schedules.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-4xl mb-4">📋</div>
-                    <p className="text-gray-500">No upcoming schedules</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {schedules.map((schedule) => (
-                      <div key={schedule.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h3 className="font-semibold text-gray-900">
-                                {schedule.title || 'Schedule Event'}
-                              </h3>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                📅 {schedule.type}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-600 mb-2">
-                              {new Date(schedule.date).toLocaleDateString()} • {schedule.start_time} - {schedule.end_time}
-                            </p>
-                            {schedule.description && (
-                              <p className="text-sm text-gray-700">
-                                {schedule.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card.Content>
-            </Card>
-          </motion.div>
-        </motion.div>
-
-        {/* Leave Request Modal */}
-        <Modal
-          isOpen={showLeaveModal}
-          onClose={() => setShowLeaveModal(false)}
-          title="Request Leave"
-        >
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date
-                </label>
-                <Input
-                  type="date"
-                  value={leaveForm.start_date}
-                  onChange={(e) => setLeaveForm({ ...leaveForm, start_date: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  End Date
-                </label>
-                <Input
-                  type="date"
-                  value={leaveForm.end_date}
-                  onChange={(e) => setLeaveForm({ ...leaveForm, end_date: e.target.value })}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Leave Type
-              </label>
-              <select
-                value={leaveForm.type}
-                onChange={(e) => setLeaveForm({ ...leaveForm, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="sick">Sick Leave</option>
-                <option value="vacation">Vacation</option>
-                <option value="personal">Personal</option>
-                <option value="emergency">Emergency</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason
-              </label>
-              <textarea
-                value={leaveForm.reason}
-                onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={3}
-                placeholder="Please provide a reason for your leave request..."
-              />
-            </div>
-            <div className="flex justify-end space-x-3">
-              <Button
-                onClick={() => setShowLeaveModal(false)}
-                variant="outline"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={submitLeaveRequest}
-                variant="primary"
-                disabled={!leaveForm.start_date || !leaveForm.end_date || !leaveForm.reason}
-              >
-                Submit Request
-              </Button>
-            </div>
+            </motion.div>
           </div>
-        </Modal>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-8"
+          >
+            {/* AI Recommendations */}
+            <motion.div variants={itemVariants}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Recommendations</h2>
+                <p className="text-gray-600">Smart suggestions to optimize your team's schedule</p>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {aiRecommendations.map((rec, index) => (
+                  <Card key={rec.id} className="p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm group">
+                    <div className="flex items-start space-x-4">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                        rec.type === 'optimization' ? 'bg-gradient-to-br from-emerald-500 to-green-600' :
+                        rec.type === 'wellness' ? 'bg-gradient-to-br from-amber-500 to-orange-600' :
+                        'bg-gradient-to-br from-blue-500 to-indigo-600'
+                      }`}>
+                        <span className="text-white text-xl">
+                          {rec.type === 'optimization' ? '⚡' :
+                           rec.type === 'wellness' ? '🛡️' : '🎯'}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-gray-900">{rec.title}</h3>
+                          <div className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            rec.impact === 'high' ? 'bg-red-100 text-red-800' :
+                            rec.impact === 'medium' ? 'bg-amber-100 text-amber-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {rec.impact} impact
+                          </div>
+                        </div>
+                        <p className="text-gray-600 text-sm mb-3">{rec.description}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-gray-500">
+                            Confidence: {rec.confidence}%
+                          </div>
+                          <Button size="small" variant="outline">
+                            {rec.action}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Upcoming Meetings */}
+            <motion.div variants={itemVariants}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Upcoming Meetings</h2>
+                <p className="text-gray-600">AI-optimized schedule with productivity scores</p>
+              </div>
+              <div className="space-y-4">
+                {schedules.map((schedule, index) => (
+                  <Card key={schedule.id} className="p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                          schedule.type === 'recurring' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' :
+                          schedule.type === 'one-time' ? 'bg-gradient-to-br from-purple-500 to-violet-600' :
+                          'bg-gradient-to-br from-emerald-500 to-green-600'
+                        }`}>
+                          <span className="text-white text-xl">
+                            {schedule.type === 'recurring' ? '🔄' :
+                             schedule.type === 'one-time' ? '📅' : '🤝'}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{schedule.title}</h3>
+                          <p className="text-sm text-gray-600">
+                            {schedule.time} • {schedule.duration} min • {schedule.participants.length} participants
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">{schedule.reason}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-2xl font-bold ${
+                          schedule.aiScore >= 90 ? 'text-green-600' :
+                          schedule.aiScore >= 75 ? 'text-amber-600' :
+                          'text-red-600'
+                        }`}>
+                          {schedule.aiScore}
+                        </div>
+                        <div className="text-xs text-gray-500">AI Score</div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Team Availability */}
+            <motion.div variants={itemVariants}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Team Energy Patterns</h2>
+                <p className="text-gray-600">AI-analyzed productivity windows for optimal scheduling</p>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {Object.entries(teamAvailability).map(([name, data], index) => (
+                  <Card key={name} className="p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm">
+                    <h3 className="font-semibold text-gray-900 mb-4">{name}</h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <div className="text-sm font-medium text-gray-700 mb-2">Energy Levels</div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600">Morning</span>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-emerald-500 to-green-600 rounded-full transition-all duration-500"
+                                  style={{ width: `${data.energy.morning}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs font-semibold text-gray-700">{data.energy.morning}%</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600">Afternoon</span>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500"
+                                  style={{ width: `${data.energy.afternoon}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs font-semibold text-gray-700">{data.energy.afternoon}%</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-600">Evening</span>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-purple-500 to-violet-600 rounded-full transition-all duration-500"
+                                  style={{ width: `${data.energy.evening}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs font-semibold text-gray-700">{data.energy.evening}%</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div className="text-sm font-medium text-gray-700 mb-2">Available Times</div>
+                        <div className="space-y-1">
+                          {data.availability.map((time, idx) => (
+                            <div key={idx} className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                              {time}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
       </div>
     </Layout>
-  )
+  );
 }
