@@ -2,7 +2,16 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
+import { motion, AnimatePresence } from 'framer-motion'
 import supabase from '../lib/supabaseClient'
+import Layout from '../components/ui/Layout'
+import Button from '../components/ui/Button'
+import Card from '../components/ui/Card'
+import StatusCard from '../components/ui/StatusCard'
+import Alert from '../components/ui/Alert'
+import LoadingSpinner from '../components/ui/LoadingSpinner'
+import ProgressBar from '../components/ui/ProgressBar'
+import AnimatedCounter from '../components/ui/AnimatedCounter'
 
 const STATUS_TYPES = [
   { key: 'present', label: 'Present ✅' },
@@ -273,70 +282,212 @@ export default function EmployeeStatus() {
   }
 
   return (
-    <div className='container'>
-      <div className='flex items-center justify-between mb-6'>
-        <h2 className='text-xl font-semibold'>Update Your Day</h2>
-        <div>
-          <button onClick={logout} className='text-sm px-3 py-1 border rounded'>Logout</button>
-        </div>
-      </div>
+    <Layout>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-8"
+        >
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Employee Dashboard</h1>
+            <p className="text-gray-600 mt-1">Update your status and stay connected with your team</p>
+          </div>
+          <Button onClick={logout} variant="outline" size="small">
+            Logout
+          </Button>
+        </motion.div>
 
-      {profile && (
-        <div className='mb-4'>
-          <div className='text-sm text-gray-600'>Signed in as <strong>{profile.full_name || user?.email}</strong></div>
-        </div>
-      )}
-
-      {/* Company / membership info */}
-      {membership ? (
-        <div className='mb-4 p-3 bg-gray-50 border rounded'>
-          <div className='text-sm'><strong>Company:</strong> {company?.name || '—'}</div>
-          <div className='text-sm'><strong>Your role:</strong> {membership.role}</div>
-          {companyOwner && <div className='text-sm'>CEO: {companyOwner.full_name || companyOwner.email}</div>}
-        </div>
-      ) : (
-        <div className='mb-4 p-3 bg-yellow-50 border rounded'>
-          <div className='text-sm'>Not a member of any company.</div>
-          {pendingRequests.length > 0 ? (
-            <div className='text-sm mt-2'>Pending request to join <strong>{pendingRequests[0].corp_companies?.name || 'a company'}</strong></div>
-          ) : (
-            <div className='text-sm mt-2'>Use "Join Company" on the homepage to request joining.</div>
-          )}
-        </div>
-      )}
-
-      {/* Status buttons */}
-      <div className='grid grid-cols-2 gap-3 mb-4'>
-        {STATUS_TYPES.map(s => (
-          <button
-            key={s.key}
-            onClick={() => postStatus(s.key)}
-            disabled={loading}
-            className='border rounded p-3 text-left'
+        {/* User Info */}
+        {profile && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-8"
           >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
-      {msg && <div className='mb-4 text-sm text-gray-700'>{msg}</div>}
-
-      {/* My Updates */}
-      <div className='mt-6'>
-        <h3 className='font-semibold mb-3'>My Updates</h3>
-        {statuses.length === 0 ? (
-          <div className='text-sm text-gray-600'>No updates yet.</div>
-        ) : (
-          <ul>
-            {statuses.map(item => (
-              <li key={item.id} className='border p-2 mb-2'>
-                <div className='text-sm text-gray-600'>{new Date(item.timestamp).toLocaleString()}</div>
-                <div><strong>{profile?.full_name || item.user_id}</strong> — {item.type} {item.message}</div>
-              </li>
-            ))}
-          </ul>
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">
+                    {(profile.full_name || user?.email || 'U').charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {profile.full_name || user?.email}
+                  </h3>
+                  <p className="text-sm text-gray-600">Team Member</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
         )}
+
+        {/* Company Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-8"
+        >
+          {membership ? (
+            <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {company?.name || 'Company'}
+                  </h3>
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Role:</span> {membership.role}
+                    </p>
+                    {companyOwner && (
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">CEO:</span> {companyOwner.full_name || companyOwner.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                  <p className="text-xs text-gray-500 mt-1">Active</p>
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <Alert variant="warning">
+              <div>
+                <h4 className="font-semibold mb-2">Not a member of any company</h4>
+                {pendingRequests.length > 0 ? (
+                  <p className="text-sm">
+                    Pending request to join <strong>{pendingRequests[0].corp_companies?.name || 'a company'}</strong>
+                  </p>
+                ) : (
+                  <p className="text-sm">
+                    Use "Join Company" on the homepage to request joining.
+                  </p>
+                )}
+              </div>
+            </Alert>
+          )}
+        </motion.div>
+
+        {/* Status Update Section */}
+        {membership && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mb-8"
+          >
+            <Card>
+              <Card.Header>
+                <Card.Title>Update Your Status</Card.Title>
+                <p className="text-sm text-gray-600 mt-2">
+                  Let your team know how you're doing today
+                </p>
+              </Card.Header>
+              
+              <Card.Content>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {STATUS_TYPES.map((status, index) => (
+                    <motion.div
+                      key={status.key}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                    >
+                      <StatusCard
+                        status={status.key}
+                        onClick={() => postStatus(status.key)}
+                        disabled={loading}
+                        loading={loading}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </Card.Content>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Message */}
+        <AnimatePresence>
+          {msg && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-6"
+            >
+              <Alert variant={msg.includes('✅') ? 'success' : 'info'}>
+                {msg}
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Status History */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Card>
+            <Card.Header>
+              <Card.Title>Recent Updates</Card.Title>
+              <p className="text-sm text-gray-600 mt-2">
+                Your latest status updates and team activity
+              </p>
+            </Card.Header>
+            
+            <Card.Content>
+              {statuses.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-4xl mb-4">📝</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No updates yet</h3>
+                  <p className="text-gray-600">Start by updating your status above</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {statuses.map((item, index) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">
+                          {(profile?.full_name || item.user_id || 'U').charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-semibold text-gray-900">
+                            {profile?.full_name || item.user_id}
+                          </span>
+                          <span className="text-sm text-gray-500">•</span>
+                          <span className="text-sm text-gray-500">
+                            {new Date(item.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 mt-1">
+                          Status: <span className="font-medium capitalize">{item.type}</span>
+                          {item.message && <span> - {item.message}</span>}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </Card.Content>
+          </Card>
+        </motion.div>
       </div>
-    </div>
+    </Layout>
   )
 }

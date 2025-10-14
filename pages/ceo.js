@@ -2,7 +2,15 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
+import { motion, AnimatePresence } from 'framer-motion'
 import supabase from '../lib/supabaseClient'
+import Layout from '../components/ui/Layout'
+import Button from '../components/ui/Button'
+import Card from '../components/ui/Card'
+import Alert from '../components/ui/Alert'
+import LoadingSpinner from '../components/ui/LoadingSpinner'
+import ProgressBar from '../components/ui/ProgressBar'
+import AnimatedCounter from '../components/ui/AnimatedCounter'
 
 export default function CeoDashboard() {
   const [feed, setFeed] = useState([])
@@ -338,101 +346,291 @@ export default function CeoDashboard() {
   }
 
   return (
-    <div className="container">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">CEO Dashboard</h2>
-        <button onClick={logout} className="text-sm px-3 py-1 border rounded">Logout</button>
-      </div>
+    <Layout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-8"
+        >
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">CEO Dashboard</h1>
+            <p className="text-gray-600 mt-1">Manage your team and monitor company activity</p>
+          </div>
+          <Button onClick={logout} variant="outline" size="small">
+            Logout
+          </Button>
+        </motion.div>
 
-      {company ? (
-        <div className="mb-6 p-4 bg-gray-100 rounded-lg border">
-          <div><strong>Company Name:</strong> {company.name}</div>
-          <div><strong>Company ID:</strong> {company.code}</div>
-        </div>
-      ) : (
-        <div className="mb-6 p-3 bg-yellow-50 border rounded text-sm text-gray-700">
-          No owned company detected for current user.
-        </div>
-      )}
-
-      <section className="mb-8">
-        <h3 className="font-semibold mb-3">Today's Summary</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 bg-green-50 border rounded text-center">
-            <div className="text-lg font-bold">{stats.present}</div>
-            <div className="text-sm text-gray-600">Present</div>
-          </div>
-          <div className="p-3 bg-yellow-50 border rounded text-center">
-            <div className="text-lg font-bold">{stats.late}</div>
-            <div className="text-sm text-gray-600">Late</div>
-          </div>
-          <div className="p-3 bg-red-50 border rounded text-center">
-            <div className="text-lg font-bold">{stats.leave}</div>
-            <div className="text-sm text-gray-600">Leave</div>
-          </div>
-          <div className="p-3 bg-blue-50 border rounded text-center">
-            <div className="text-lg font-bold">{stats.visit}</div>
-            <div className="text-sm text-gray-600">On Visit</div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mb-6">
-        <h3 className="font-semibold mb-2">Join Requests</h3>
-        {requests.length === 0 ? <div className="text-sm text-gray-600">No requests</div> : (
-          <ul>
-            {requests.map((r) => (
-              <li key={r.id} className="border p-2 mb-2 flex justify-between items-center">
+        {/* Company Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8"
+        >
+          {company ? (
+            <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+              <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-semibold">{r.corp_profiles?.full_name || r.corp_profiles?.email || r.user_id}</div>
-                  <div className="text-sm text-gray-600">{r.corp_companies?.name || ''}</div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    {company.name}
+                  </h3>
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Company ID:</span> {company.code}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Owner:</span> {user?.email}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => approve(r)} className="bg-green-600 text-white px-3 py-1 rounded">Approve</button>
-                  <button onClick={() => deny(r)} className="bg-red-500 text-white px-3 py-1 rounded">Deny</button>
+                <div className="text-right">
+                  <div className="w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
+                  <p className="text-sm text-gray-500 mt-1">Active</p>
                 </div>
-              </li>
-            ))}
-          </ul>
+              </div>
+            </Card>
+          ) : (
+            <Alert variant="warning">
+              <div>
+                <h4 className="font-semibold mb-2">No owned company detected</h4>
+                <p className="text-sm">You need to create a company to access the CEO dashboard.</p>
+              </div>
+            </Alert>
+          )}
+        </motion.div>
+
+        {/* Stats Overview */}
+        {company && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-8"
+          >
+            <Card>
+              <Card.Header>
+                <Card.Title>Today's Team Overview</Card.Title>
+                <p className="text-sm text-gray-600 mt-2">
+                  Real-time status updates from your team members
+                </p>
+              </Card.Header>
+              
+              <Card.Content>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <span className="text-white text-2xl">✅</span>
+                    </div>
+                    <div className="text-3xl font-bold text-green-600 mb-1">
+                      <AnimatedCounter value={stats.present} />
+                    </div>
+                    <div className="text-sm text-gray-600">Present</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <span className="text-white text-2xl">🕗</span>
+                    </div>
+                    <div className="text-3xl font-bold text-yellow-600 mb-1">
+                      <AnimatedCounter value={stats.late} />
+                    </div>
+                    <div className="text-sm text-gray-600">Late</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <span className="text-white text-2xl">🌴</span>
+                    </div>
+                    <div className="text-3xl font-bold text-red-600 mb-1">
+                      <AnimatedCounter value={stats.leave} />
+                    </div>
+                    <div className="text-sm text-gray-600">On Leave</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <span className="text-white text-2xl">🧭</span>
+                    </div>
+                    <div className="text-3xl font-bold text-blue-600 mb-1">
+                      <AnimatedCounter value={stats.visit} />
+                    </div>
+                    <div className="text-sm text-gray-600">On Visit</div>
+                  </div>
+                </div>
+              </Card.Content>
+            </Card>
+          </motion.div>
         )}
-      </section>
 
-      <section>
-        <h3 className="font-semibold mb-2">Live Feed</h3>
-        <ul>
-          {feed.map((item) => (
-            <li key={item.id} className="border p-2 mb-2">
-              <div className="text-sm text-gray-600">{new Date(item.timestamp).toLocaleString()}</div>
-              <div><strong>{item.corp_profiles?.full_name || item.user_id}</strong> — {item.type} {item.message}</div>
-            </li>
-          ))}
-        </ul>
-      </section>
+        {/* Join Requests */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mb-8"
+        >
+          <Card>
+            <Card.Header>
+              <Card.Title>Join Requests</Card.Title>
+              <p className="text-sm text-gray-600 mt-2">
+                Review and approve new team member requests
+              </p>
+            </Card.Header>
+            
+            <Card.Content>
+              {requests.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-4xl mb-4">👥</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No pending requests</h3>
+                  <p className="text-gray-600">All join requests have been processed</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {requests.map((request, index) => (
+                    <motion.div
+                      key={request.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold">
+                            {(request.corp_profiles?.full_name || request.user_id || 'U').charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">
+                            {request.corp_profiles?.full_name || request.corp_profiles?.email || request.user_id}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            Requested to join {request.corp_companies?.name || 'your company'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(request.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => approve(request)}
+                          variant="success"
+                          size="small"
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          onClick={() => deny(request)}
+                          variant="danger"
+                          size="small"
+                        >
+                          Deny
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </Card.Content>
+          </Card>
+        </motion.div>
 
-      {/* ---------------- DEBUG PANEL (temporary) ---------------- */}
-      {debugVisible && (
-        <div className="fixed right-4 bottom-4 w-96 max-w-full bg-white border rounded p-3 shadow-lg text-xs z-50">
-          <div className="flex justify-between items-center mb-2">
-            <strong>Debug (temp)</strong>
-            <button onClick={() => setDebugVisible(false)} className="text-gray-500">hide</button>
-          </div>
-          <div><strong>Current user id:</strong> {user?.id || '—'}</div>
-          <div><strong>Current user email:</strong> {user?.email || '—'}</div>
-          <div className="mt-2"><strong>Owned company ids:</strong> {JSON.stringify(ownedCompanyIdsRef.current)}</div>
-          <div className="mt-2"><strong>Company shown:</strong> {company ? company.name + ' (' + company.id + ')' : '—'}</div>
-          <div className="mt-2"><strong>Requests (enriched count):</strong> {requests.length}</div>
-          <div className="mt-1"><strong>Requests (raw count):</strong> {rawRequestsCount !== null ? rawRequestsCount : '—'}</div>
-          <div className="mt-2"><strong>Last Supabase error:</strong> {lastError || '—'}</div>
-          <details className="mt-2">
-            <summary className="cursor-pointer">Raw requests (click)</summary>
-            <pre className="max-h-60 overflow-auto p-2 bg-gray-50 border mt-2 text-xs">{JSON.stringify(requests, null, 2)}</pre>
-          </details>
-          <div className="mt-2 text-gray-500">
-  If raw count &gt; 0 but enriched count = 0, check RLS policies / FK relationships for <code>corp_join_requests</code>.
-</div>
+        {/* Live Feed */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card>
+            <Card.Header>
+              <Card.Title>Live Activity Feed</Card.Title>
+              <p className="text-sm text-gray-600 mt-2">
+                Real-time updates from your team members
+              </p>
+            </Card.Header>
+            
+            <Card.Content>
+              {feed.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-4xl mb-4">📊</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No activity yet</h3>
+                  <p className="text-gray-600">Team activity will appear here in real-time</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {feed.map((item, index) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">
+                          {(item.corp_profiles?.full_name || item.user_id || 'U').charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-semibold text-gray-900">
+                            {item.corp_profiles?.full_name || item.user_id}
+                          </span>
+                          <span className="text-sm text-gray-500">•</span>
+                          <span className="text-sm text-gray-500">
+                            {new Date(item.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 mt-1">
+                          Status: <span className="font-medium capitalize">{item.type}</span>
+                          {item.message && <span> - {item.message}</span>}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </Card.Content>
+          </Card>
+        </motion.div>
 
-        </div>
-      )}
-    </div>
+        {/* Debug Panel */}
+        {debugVisible && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="fixed right-4 bottom-4 w-96 max-w-full bg-white border rounded-xl p-4 shadow-xl text-xs z-50"
+          >
+            <div className="flex justify-between items-center mb-3">
+              <strong className="text-sm">Debug Panel</strong>
+              <Button
+                onClick={() => setDebugVisible(false)}
+                variant="ghost"
+                size="small"
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div><strong>User ID:</strong> {user?.id || '—'}</div>
+              <div><strong>Email:</strong> {user?.email || '—'}</div>
+              <div><strong>Company:</strong> {company ? company.name : '—'}</div>
+              <div><strong>Requests:</strong> {requests.length}</div>
+              <div><strong>Feed Items:</strong> {feed.length}</div>
+              {lastError && (
+                <div className="text-red-600">
+                  <strong>Error:</strong> {lastError}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </Layout>
   )
 }

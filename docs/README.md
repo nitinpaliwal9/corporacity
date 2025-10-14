@@ -1,23 +1,19 @@
-# 🚀 Corporacity - Production-Ready Team Status Management Platform
+# Corporacity - Production-Ready Team Status Management Platform
 
-[![Next.js](https://img.shields.io/badge/Next.js-13.4.10-black)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-18.2.0-blue)](https://reactjs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-Latest-green)](https://supabase.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4.7-blue)](https://tailwindcss.com/)
-[![Jest](https://img.shields.io/badge/Jest-29.5.0-red)](https://jestjs.io/)
+## 🚀 Overview
 
-A modern, real-time team status management platform built with Next.js and Supabase. Track employee daily status updates with CEO approval workflows, real-time notifications, and comprehensive security features.
+Corporacity is a modern, real-time team status management platform built with Next.js and Supabase. It enables companies to track employee daily status updates with CEO approval workflows and real-time notifications.
 
 ## ✨ Features
 
-### 🎯 Core Functionality
-- **Real-time Status Updates**: Live tracking of Present, Late, On Leave, On Visit, Short Leave
+### Core Functionality
+- **Real-time Status Updates**: Live status tracking (Present, Late, On Leave, On Visit, Short Leave)
 - **Company Management**: Create companies with unique codes and manage memberships
 - **Approval Workflows**: CEO approval system for employee join requests
 - **User Authentication**: Secure Google OAuth integration
 - **Real-time Notifications**: Instant updates across all users
 
-### 🛡️ Production Features
+### Production Features
 - **Row Level Security (RLS)**: Comprehensive database security policies
 - **Input Validation**: Robust validation and sanitization
 - **Error Handling**: Comprehensive error boundaries and logging
@@ -36,10 +32,19 @@ A modern, real-time team status management platform built with Next.js and Supab
 - **Testing**: Jest, React Testing Library
 - **Deployment**: Vercel-ready configuration
 
+### Database Schema
+```
+corp_profiles (user profiles)
+├── corp_companies (company information)
+├── corp_memberships (user-company relationships)
+├── corp_join_requests (pending join requests)
+└── corp_statuses (employee status updates)
+```
+
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 18+ 
 - npm or yarn
 - Supabase account
 - Google OAuth credentials
@@ -59,7 +64,7 @@ A modern, real-time team status management platform built with Next.js and Supab
 
 3. **Set up environment variables**
    ```bash
-   cp config/environment.example.js config/environment.js
+   cp .env.example .env.local
    ```
    
    Fill in your environment variables:
@@ -99,13 +104,11 @@ corporacity-mvp/
 ├── components/           # Reusable UI components
 │   ├── ui/              # Base UI components
 │   └── ErrorBoundary.js # Error boundary component
-├── config/              # Configuration files
 ├── docs/                # Documentation
 ├── lib/                 # Utility libraries
 │   ├── analytics.js     # Analytics and monitoring
 │   ├── apiSecurity.js   # API security utilities
 │   ├── errorHandler.js  # Error handling utilities
-│   ├── performance.js   # Performance optimization
 │   ├── supabaseClient.js # Supabase configuration
 │   └── validation.js    # Input validation utilities
 ├── pages/               # Next.js pages
@@ -138,6 +141,13 @@ npm run lint         # Run ESLint
 npm run lint:fix     # Fix ESLint errors
 ```
 
+### Code Standards
+
+- **ESLint**: Configured with Next.js rules
+- **Prettier**: Code formatting (recommended)
+- **Testing**: Jest with React Testing Library
+- **Type Safety**: PropTypes for component validation
+
 ## 🛡️ Security
 
 ### Database Security
@@ -150,6 +160,11 @@ npm run lint:fix     # Fix ESLint errors
 - **CORS**: Properly configured cross-origin policies
 - **Security Headers**: Comprehensive security headers
 - **Input Sanitization**: XSS protection and input cleaning
+
+### Authentication & Authorization
+- **OAuth Integration**: Secure Google OAuth flow
+- **Session Management**: Proper session handling and cleanup
+- **Role-based Access**: Owner vs Employee permissions
 
 ## 📊 Monitoring & Analytics
 
@@ -172,6 +187,7 @@ npm run lint:fix     # Fix ESLint errors
 - **Unit Tests**: Utility functions and components
 - **Integration Tests**: API endpoints and data flow
 - **Component Tests**: UI component behavior
+- **E2E Tests**: Critical user flows (recommended)
 
 ### Running Tests
 ```bash
@@ -215,9 +231,15 @@ vercel --prod
 ```
 
 #### Docker
-```bash
-# Build and run
-docker-compose up -d
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
 ```
 
 ## 📈 Performance
@@ -246,19 +268,44 @@ Approve employee join request
 }
 ```
 
-#### GET /api/health
-Health check endpoint
-```json
-{
-  "status": "healthy",
-  "timestamp": "2023-01-01T00:00:00.000Z",
-  "checks": {
-    "database": "healthy",
-    "realtime": "healthy",
-    "auth": "healthy"
-  }
-}
-```
+### Database Tables
+
+#### corp_profiles
+- `id` (uuid, primary key)
+- `email` (text)
+- `full_name` (text)
+- `phone` (text)
+- `created_at` (timestamptz)
+
+#### corp_companies
+- `id` (uuid, primary key)
+- `name` (text)
+- `code` (text, unique)
+- `owner_id` (uuid, foreign key)
+- `created_at` (timestamptz)
+
+#### corp_memberships
+- `id` (uuid, primary key)
+- `user_id` (uuid, foreign key)
+- `company_id` (uuid, foreign key)
+- `role` (text, default: 'employee')
+- `created_at` (timestamptz)
+
+#### corp_join_requests
+- `id` (uuid, primary key)
+- `user_id` (uuid, foreign key)
+- `company_id` (uuid, foreign key)
+- `message` (text)
+- `created_at` (timestamptz)
+
+#### corp_statuses
+- `id` (uuid, primary key)
+- `user_id` (uuid, foreign key)
+- `company_id` (uuid, foreign key)
+- `type` (enum: present, late, leave, visit, short_leave)
+- `message` (text)
+- `timestamp` (timestamptz)
+- `is_auto` (boolean, default: false)
 
 ## 🤝 Contributing
 
@@ -300,8 +347,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Review bundle size and optimization
 
 ### Getting Help
-- Check the [documentation](docs/README.md)
-- Review [deployment guide](docs/DEPLOYMENT.md)
+- Check the documentation
+- Review existing issues
 - Create a new issue with detailed information
 - Contact the development team
 
@@ -323,7 +370,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [ ] Advanced monitoring
 - [ ] Automated testing pipeline
 - [ ] Performance optimization
-
----
-
-**Built with ❤️ for modern teams**

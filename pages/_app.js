@@ -3,6 +3,9 @@ import '../styles/globals.css'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import supabase from '../lib/supabaseClient'
+import ErrorBoundary from '../components/ErrorBoundary'
+import { initializeAnalytics, analytics } from '../lib/analytics'
+import { setupGlobalErrorHandling } from '../lib/errorHandler'
 
 function App({ Component, pageProps }) {
   const router = useRouter()
@@ -13,6 +16,10 @@ function App({ Component, pageProps }) {
   useEffect(() => {
     let cancelled = false
 
+    // Initialize analytics and error handling
+    initializeAnalytics()
+    setupGlobalErrorHandling()
+
     const bootstrap = async () => {
       // 1) try to restore persisted session (if any)
       try {
@@ -21,6 +28,7 @@ function App({ Component, pageProps }) {
         const session = maybe?.data?.session ?? maybe?.session ?? null
 
         if (session) {
+          analytics.setUserId(session.user.id)
           await postSignInFlow(session)
         }
       } catch (err) {
@@ -34,8 +42,12 @@ function App({ Component, pageProps }) {
           async (event, session) => {
             // keep behavior deliberate and safe
             if (event === 'SIGNED_IN' && session) {
+              analytics.setUserId(session.user.id)
+              analytics.track('user_signed_in', { method: 'session_restore' })
               await postSignInFlow(session)
             } else if (event === 'SIGNED_OUT') {
+              analytics.track('user_signed_out')
+              analytics.setUserId(null)
               // on sign-out, send user to the guest landing page
               if (router.pathname !== '/') router.replace('/')
             }
@@ -155,7 +167,11 @@ function App({ Component, pageProps }) {
     return null
   }
 
-  return <Component {...pageProps} />
+  return (
+    <ErrorBoundary>
+      <Component {...pageProps} />
+    </ErrorBoundary>
+  )
 }
 
 export default App
