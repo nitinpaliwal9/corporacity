@@ -99,7 +99,7 @@ export default function SupportArticle3() {
                         </div>
                         <div>
                           <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Access Integration Settings</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Go to your Corporacity dashboard and navigate to Settings > Integrations.</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">Go to your Corporacity dashboard and navigate to Settings &gt; Integrations.</p>
                         </div>
                       </div>
                       <div className="flex items-start">

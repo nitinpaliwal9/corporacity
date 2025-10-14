@@ -125,7 +125,7 @@ export default function SupportArticle5() {
                         </div>
                         <div>
                           <h4 className="font-semibold text-gray-900 dark:text-white mb-1">Access User Management</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Go to Settings > Team Management to view all team members and their current roles.</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">Go to Settings &gt; Team Management to view all team members and their current roles.</p>
                         </div>
                       </div>
                       <div className="flex items-start">

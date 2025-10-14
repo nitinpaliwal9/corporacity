@@ -187,7 +187,7 @@ export default function SupportArticle6() {
                     <Card className="p-6">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Chrome</h3>
                       <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
-                        <li>• Clear browsing data: Settings > Privacy > Clear browsing data</li>
+                        <li>• Clear browsing data: Settings &gt; Privacy &gt; Clear browsing data</li>
                         <li>• Disable extensions temporarily</li>
                         <li>• Check if JavaScript is enabled</li>
                         <li>• Update to the latest version</li>
@@ -207,7 +207,7 @@ export default function SupportArticle6() {
                     <Card className="p-6">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Safari</h3>
                       <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
-                        <li>• Clear website data: Safari > Preferences > Privacy</li>
+                        <li>• Clear website data: Safari &gt; Preferences &gt; Privacy</li>
                         <li>• Disable content blockers</li>
                         <li>• Allow pop-ups for Corporacity</li>
                         <li>• Update Safari to latest version</li>
@@ -217,7 +217,7 @@ export default function SupportArticle6() {
                     <Card className="p-6">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Edge</h3>
                       <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
-                        <li>• Clear browsing data: Settings > Privacy > Clear browsing data</li>
+                        <li>• Clear browsing data: Settings &gt; Privacy &gt; Clear browsing data</li>
                         <li>• Disable tracking prevention</li>
                         <li>• Check pop-up blocker settings</li>
                         <li>• Update Edge to latest version</li>

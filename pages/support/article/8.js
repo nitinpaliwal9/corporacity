@@ -192,7 +192,7 @@ export default function SupportArticle8() {
                       <div className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                         <p>To upgrade your subscription plan:</p>
                         <ol className="list-decimal list-inside ml-4 space-y-1">
-                          <li>Go to Settings > Billing & Subscription</li>
+                          <li>Go to Settings &gt; Billing & Subscription</li>
                           <li>Click "Upgrade Plan" next to your current plan</li>
                           <li>Select your new plan and confirm the changes</li>
                           <li>Your new plan will be effective immediately</li>
@@ -206,7 +206,7 @@ export default function SupportArticle8() {
                       <div className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                         <p>To downgrade your subscription plan:</p>
                         <ol className="list-decimal list-inside ml-4 space-y-1">
-                          <li>Go to Settings > Billing & Subscription</li>
+                          <li>Go to Settings &gt; Billing & Subscription</li>
                           <li>Click "Change Plan" and select a lower tier</li>
                           <li>Confirm the downgrade</li>
                           <li>Changes take effect at your next billing cycle</li>
@@ -220,7 +220,7 @@ export default function SupportArticle8() {
                       <div className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                         <p>To cancel your subscription:</p>
                         <ol className="list-decimal list-inside ml-4 space-y-1">
-                          <li>Go to Settings > Billing & Subscription</li>
+                          <li>Go to Settings &gt; Billing & Subscription</li>
                           <li>Click "Cancel Subscription"</li>
                           <li>Follow the cancellation process</li>
                           <li>Your account will remain active until the end of the billing period</li>
