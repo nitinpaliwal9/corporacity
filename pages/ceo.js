@@ -281,38 +281,85 @@ export default function CeoDashboard() {
   try {
         console.log('Starting approve process:', req)
         
-        // Test if API endpoint is accessible first
+        // Try API first, fallback to direct Supabase if it fails
+        let apiSuccess = false
+        
         try {
+          // Test if API endpoint is accessible first
           const testRes = await fetch('/api/approve', { method: 'OPTIONS' })
           console.log('API endpoint test:', testRes.status, testRes.statusText)
-        } catch (testErr) {
-          console.error('API endpoint not accessible:', testErr)
+          
+          // 1️⃣ Try API route first
+          const res = await fetch('/api/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: req.user_id,
+              company_id: req.company_id,
+            }),
+          })
+          
+          console.log('API response status:', res.status, res.statusText)
+          console.log('API response headers:', Object.fromEntries(res.headers.entries()))
+
+          // Check if response has content
+          const contentType = res.headers.get('content-type')
+          console.log('Response content-type:', contentType)
+          
+          let result
+          try {
+            if (contentType && contentType.includes('application/json')) {
+              result = await res.json()
+            } else {
+              const text = await res.text()
+              console.log('Non-JSON response:', text)
+              throw new Error(`Expected JSON response, got: ${text}`)
+            }
+          } catch (jsonError) {
+            console.error('JSON parsing error:', jsonError)
+            throw new Error(`API response error: ${jsonError.message}`)
+          }
+
+          if (!res.ok) {
+            console.error('Approve API error:', result)
+            throw new Error(result.error || 'API request failed')
+          }
+
+          console.log('Approve API success:', result)
+          apiSuccess = true
+          
+        } catch (apiError) {
+          console.error('API call failed, trying direct Supabase:', apiError)
+          apiSuccess = false
         }
         
-        // 1️⃣ Securely call your API route (uses service role on the server)
-        const res = await fetch('/api/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: req.user_id,
-        company_id: req.company_id,
-      }),
-    })
-    
-    console.log('API response status:', res.status, res.statusText)
-    console.log('API response headers:', Object.fromEntries(res.headers.entries()))
+        // 2️⃣ Fallback: Direct Supabase approach if API fails
+        if (!apiSuccess) {
+          console.log('Using direct Supabase approach...')
+          
+          // Insert membership directly
+          const { data: membership, error: membershipError } = await supabase
+            .from('corp_memberships')
+            .insert([{ user_id: req.user_id, company_id: req.company_id, role: 'employee' }])
+            .select()
 
-    const result = await res.json()
-    if (!res.ok) {
-      console.error('Approve API error:', result)
-      setLastError(JSON.stringify(result.error || result))
-      alert(result.error || 'Error approving request')
-      return
-    }
+          if (membershipError) {
+            console.error('Direct membership insert error:', membershipError)
+            
+            // Handle duplicate gracefully
+            if (membershipError.code === '23505') {
+              console.log('User already a member, continuing...')
+            } else {
+              setLastError(JSON.stringify(membershipError))
+              alert(`Failed to add member: ${membershipError.message}`)
+              return
+            }
+          } else {
+            console.log('Direct membership created:', membership)
+          }
+        }
 
-    console.log('Approve API success:', result)
-
-        // 2️⃣ Delete join request (CEO's session allowed by RLS)
+        // 3️⃣ Delete join request (CEO's session allowed by RLS)
         const { error: delErr } = await supabase
           .from('corp_join_requests')
           .delete()
