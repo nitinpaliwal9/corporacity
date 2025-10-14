@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { motion, AnimatePresence } from 'framer-motion'
 import supabase from '../lib/supabaseClient'
+import { NotificationService } from '../lib/notificationService'
+import { SecurityService } from '../lib/securityService'
 import Layout from '../components/ui/Layout'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
@@ -273,6 +275,21 @@ export default function EmployeeStatus() {
       setStatuses(s => [inserted, ...s])
       setMsg('✅ Status updated successfully!')
       
+      // Send notification to company
+      await NotificationService.notifyStatusUpdate(
+        membership.company_id,
+        user.id,
+        profile?.full_name || user.email,
+        type
+      )
+      
+      // Log status update for security
+      await SecurityService.logStatusUpdate(
+        membership.company_id,
+        user.id,
+        type
+      )
+      
       // Clear message after 3 seconds
       setTimeout(() => setMsg(''), 3000)
     } catch (err) {
@@ -301,9 +318,32 @@ export default function EmployeeStatus() {
             <h1 className="text-3xl font-bold text-gray-900">Employee Dashboard</h1>
             <p className="text-gray-600 mt-1">Update your status and stay connected with your team</p>
           </div>
-          <Button onClick={logout} variant="outline" size="small">
-            Logout
-          </Button>
+          <div className="flex space-x-3">
+            <Button
+              onClick={() => router.push('/analytics')}
+              variant="outline"
+              size="small"
+            >
+              📊 Analytics
+            </Button>
+            <Button
+              onClick={() => router.push('/members')}
+              variant="outline"
+              size="small"
+            >
+              👥 Team Members
+            </Button>
+            <Button
+              onClick={() => router.push('/schedule')}
+              variant="outline"
+              size="small"
+            >
+              📅 Schedule
+            </Button>
+            <Button onClick={logout} variant="outline" size="small">
+              Logout
+            </Button>
+          </div>
         </motion.div>
 
         {/* User Info */}

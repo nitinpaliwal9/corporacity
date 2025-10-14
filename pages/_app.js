@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import supabase from '../lib/supabaseClient'
 import ErrorBoundary from '../components/ErrorBoundary'
+import PWAInstall from '../components/ui/PWAInstall'
 import { initializeAnalytics, analytics } from '../lib/analytics'
 import { setupGlobalErrorHandling } from '../lib/errorHandler'
 
@@ -19,6 +20,17 @@ function App({ Component, pageProps }) {
     // Initialize analytics and error handling
     initializeAnalytics()
     setupGlobalErrorHandling()
+    
+    // Register service worker for PWA
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('Service Worker registered:', registration)
+        })
+        .catch(error => {
+          console.log('Service Worker registration failed:', error)
+        })
+    }
 
     const bootstrap = async () => {
       // 1) try to restore persisted session (if any)
@@ -170,6 +182,7 @@ function App({ Component, pageProps }) {
   return (
     <ErrorBoundary>
       <Component {...pageProps} />
+      <PWAInstall />
     </ErrorBoundary>
   )
 }

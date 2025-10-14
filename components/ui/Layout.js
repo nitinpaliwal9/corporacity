@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import ThemeToggle from './ThemeToggle';
+import NotificationCenter from './NotificationCenter';
+import supabase from '../../lib/supabaseClient';
 
 const Layout = ({ 
   children, 
@@ -11,6 +13,30 @@ const Layout = ({
   className = ''
 }) => {
   const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [companyId, setCompanyId] = useState(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUser(user);
+        
+        // Get user's company
+        const { data: membership } = await supabase
+          .from('corp_memberships')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (membership) {
+          setCompanyId(membership.company_id);
+        }
+      }
+    };
+
+    getUser();
+  }, []);
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 ${className}`}>
@@ -56,6 +82,9 @@ const Layout = ({
               </nav>
 
               <div className="flex items-center space-x-4">
+                {user && companyId && (
+                  <NotificationCenter user={user} companyId={companyId} />
+                )}
                 <ThemeToggle />
                 <div className="hidden sm:flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { motion, AnimatePresence } from 'framer-motion'
 import supabase from '../lib/supabaseClient'
+import { NotificationService } from '../lib/notificationService'
 import Layout from '../components/ui/Layout'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
@@ -256,20 +257,43 @@ export default function CeoDashboard() {
     try {
       const today = new Date()
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
+      
+      console.log('Fetching stats for company:', companyId, 'from:', startOfDay)
+      
       const { data, error } = await supabase
         .from('corp_statuses')
-        .select('type')
+        .select('type, user_id, timestamp')
         .eq('company_id', companyId)
         .gte('timestamp', startOfDay)
+        .order('timestamp', { ascending: false })
+        
       if (error) {
         console.error('fetchStats error', error)
         setLastError(JSON.stringify(error))
         return
       }
-      const counts = { present: 0, late: 0, leave: 0, visit: 0 }
-      (data || []).forEach((s) => {
-        if (counts[s.type] !== undefined) counts[s.type]++
+      
+      console.log('Raw status data:', data)
+      
+      // Get the latest status for each user (to avoid counting multiple statuses per user)
+      const userLatestStatus = {}
+      ;(data || []).forEach((status) => {
+        if (!userLatestStatus[status.user_id] || 
+            new Date(status.timestamp) > new Date(userLatestStatus[status.user_id].timestamp)) {
+          userLatestStatus[status.user_id] = status
+        }
       })
+      
+      console.log('Latest status per user:', userLatestStatus)
+      
+      const counts = { present: 0, late: 0, leave: 0, visit: 0 }
+      Object.values(userLatestStatus).forEach((status) => {
+        if (counts[status.type] !== undefined) {
+          counts[status.type]++
+        }
+      })
+      
+      console.log('Calculated stats:', counts)
       setStats(counts)
     } catch (err) {
       console.error('fetchStats exception', err)
@@ -349,6 +373,11 @@ export default function CeoDashboard() {
             // Handle duplicate gracefully
             if (membershipError.code === '23505') {
               console.log('User already a member, continuing...')
+            } else if (membershipError.message.includes('row-level security policy')) {
+              console.log('RLS policy blocking membership creation')
+              setLastError('RLS policy error - need to update database policies')
+              alert('❌ Database security policy is blocking this action. Please run the RLS fix script in Supabase.')
+              return
             } else {
               setLastError(JSON.stringify(membershipError))
               alert(`Failed to add member: ${membershipError.message}`)
@@ -360,6 +389,7 @@ export default function CeoDashboard() {
         }
 
         // 3️⃣ Delete join request (CEO's session allowed by RLS)
+        console.log('Attempting to delete join request:', req.id)
         const { error: delErr } = await supabase
           .from('corp_join_requests')
           .delete()
@@ -368,18 +398,39 @@ export default function CeoDashboard() {
         if (delErr) {
           console.error('approve delete join request error', delErr)
           setLastError(JSON.stringify(delErr))
-          alert('Member added successfully, but could not remove the join request. Please refresh the page.')
+          
+          if (delErr.message.includes('row-level security policy')) {
+            alert('❌ Member added but cannot delete join request due to security policy. Please refresh the page.')
+          } else {
+            alert('❌ Member added but could not remove the join request. Please refresh the page.')
+          }
+          
           // Still update UI since member was added
           setRequests((r) => r.filter((x) => x.id !== req.id))
           setRawRequestsCount((c) => (c !== null ? Math.max(0, c - 1) : c))
           return
         }
 
-    // 3️⃣ Update UI + local state
-    setRequests((r) => r.filter((x) => x.id !== req.id))
-    setRawRequestsCount((c) => (c !== null ? Math.max(0, c - 1) : c))
-    setLastError(null)
-    alert('✅ Member approved successfully!')
+        console.log('Join request deleted successfully')
+
+        // 4️⃣ Send notification to approved user
+        await NotificationService.notifyJoinApproved(
+          req.company_id,
+          req.user_id,
+          req.corp_profiles?.full_name || 'New Member'
+        )
+
+        // 5️⃣ Update UI + local state
+        setRequests((r) => r.filter((x) => x.id !== req.id))
+        setRawRequestsCount((c) => (c !== null ? Math.max(0, c - 1) : c))
+        setLastError(null)
+        alert('✅ Member approved successfully!')
+        
+        // 6️⃣ Refresh the requests list to ensure UI is up to date
+        setTimeout(() => {
+          console.log('Refreshing requests list...')
+          fetchRequestsForCompanyIds(companyIds)
+        }, 1000)
   } catch (err) {
     console.error('approve exception', err)
     setLastError(String(err))
@@ -423,9 +474,46 @@ export default function CeoDashboard() {
             <h1 className="text-3xl font-bold text-gray-900">CEO Dashboard</h1>
             <p className="text-gray-600 mt-1">Manage your team and monitor company activity</p>
           </div>
-          <Button onClick={logout} variant="outline" size="small">
-            Logout
-          </Button>
+          <div className="flex space-x-3">
+            <Button
+              onClick={() => router.push('/analytics')}
+              variant="outline"
+              size="small"
+            >
+              📊 Analytics
+            </Button>
+            <Button
+              onClick={() => router.push('/members')}
+              variant="outline"
+              size="small"
+            >
+              👥 Team Members
+            </Button>
+            <Button
+              onClick={() => router.push('/schedule')}
+              variant="outline"
+              size="small"
+            >
+              📅 Schedule
+            </Button>
+            <Button
+              onClick={() => router.push('/admin')}
+              variant="outline"
+              size="small"
+            >
+              🔒 Admin
+            </Button>
+            <Button
+              onClick={() => router.push('/integrations')}
+              variant="outline"
+              size="small"
+            >
+              🔗 Integrations
+            </Button>
+            <Button onClick={logout} variant="outline" size="small">
+              Logout
+            </Button>
+          </div>
         </motion.div>
 
         {/* Company Info */}
@@ -477,10 +565,27 @@ export default function CeoDashboard() {
           >
             <Card>
               <Card.Header>
-                <Card.Title>Today's Team Overview</Card.Title>
-                <p className="text-sm text-gray-600 mt-2">
-                  Real-time status updates from your team members
-                </p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <Card.Title>Today's Team Overview</Card.Title>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Real-time status updates from your team members
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      console.log('Manual stats refresh triggered')
+                      if (company?.id) {
+                        fetchStats(company.id)
+                      }
+                    }}
+                    variant="outline"
+                    size="small"
+                    className="text-xs"
+                  >
+                    🔄 Refresh
+                  </Button>
+                </div>
               </Card.Header>
               
               <Card.Content>

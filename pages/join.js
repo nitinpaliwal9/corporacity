@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { motion } from 'framer-motion'
 import supabase from '../lib/supabaseClient'
+import { NotificationService } from '../lib/notificationService'
 import Layout from '../components/ui/Layout'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
@@ -192,6 +193,13 @@ export default function JoinCompany() {
       }
 
           setMsg(`✅ Join request sent to ${company.name}! You'll be notified when approved.`)
+
+          // Send notification to company
+          await NotificationService.notifyJoinRequest(
+            company.id,
+            user.id,
+            user.user_metadata?.full_name || user.email
+          )
 
           // Don't redirect immediately - let user wait for approval
           setTimeout(() => {
