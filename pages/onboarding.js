@@ -16,9 +16,22 @@ export default function Onboarding() {
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-    })
+    const loadUser = async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser()
+        if (error) {
+          console.error('Error loading user:', error)
+          setMsg('Error loading user data. Please refresh the page.')
+        } else {
+          setUser(data.user)
+        }
+      } catch (err) {
+        console.error('Exception loading user:', err)
+        setMsg('Error loading user data. Please refresh the page.')
+      }
+    }
+    
+    loadUser()
   }, [])
 
   const handleCreateCompany = () => {

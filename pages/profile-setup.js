@@ -56,17 +56,25 @@ export default function ProfileSetup() {
     setMsg('')
     
     try {
-      await supabase.from('corp_profiles').upsert([{
+      const { error } = await supabase.from('corp_profiles').upsert([{
         id: user.id,
         email: user.email,
         full_name: fullName.trim(),
         phone: phone.trim() || null
       }])
 
+      if (error) {
+        console.error('saveProfile error', error)
+        setMsg(`Failed to save profile: ${error.message}`)
+        return
+      }
+
+      setMsg('✅ Profile saved successfully! Redirecting...')
+      
       // After profile saved, go to onboarding so user creates/join
-      router.push('/onboarding')
+      setTimeout(() => router.push('/onboarding'), 1500)
     } catch (err) {
-      console.error('saveProfile error', err)
+      console.error('saveProfile exception', err)
       setMsg('Failed to save profile. Please try again.')
     } finally {
       setLoading(false)

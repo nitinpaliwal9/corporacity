@@ -263,13 +263,20 @@ export default function EmployeeStatus() {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('postStatus error', error)
+        setMsg(`Failed to post status: ${error.message}`)
+        return
+      }
 
       // optimistic UI: add to statuses
       setStatuses(s => [inserted, ...s])
-      setMsg('Status posted.')
+      setMsg('✅ Status updated successfully!')
+      
+      // Clear message after 3 seconds
+      setTimeout(() => setMsg(''), 3000)
     } catch (err) {
-      console.error('postStatus error', err)
+      console.error('postStatus exception', err)
       setMsg(err.message || 'Failed to post status.')
     } finally {
       setLoading(false)

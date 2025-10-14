@@ -98,10 +98,28 @@ export default function CreateCompany() {
     setMsg('Creating your company...')
 
     try {
-      // generate unique company code
-      const code =
-        name.trim().split(' ')[0].toUpperCase().slice(0, 5) +
-        Math.random().toString(36).slice(2, 7).toUpperCase()
+      // generate unique company code with collision handling
+      let code, attempts = 0, maxAttempts = 5
+      
+      do {
+        code = name.trim().split(' ')[0].toUpperCase().slice(0, 5) +
+               Math.random().toString(36).slice(2, 7).toUpperCase()
+        
+        // Check if code already exists
+        const { data: existing } = await supabase
+          .from('corp_companies')
+          .select('id')
+          .eq('code', code)
+          .maybeSingle()
+        
+        if (!existing) break
+        attempts++
+      } while (attempts < maxAttempts)
+
+      if (attempts >= maxAttempts) {
+        setMsg('Failed to generate unique company code. Please try again.')
+        return
+      }
 
       // try insert company (owner_id set)
       const { data, error } = await supabase

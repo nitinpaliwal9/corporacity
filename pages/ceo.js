@@ -293,22 +293,27 @@ export default function CeoDashboard() {
     if (!res.ok) {
       console.error('Approve API error:', result)
       setLastError(JSON.stringify(result.error || result))
-      alert(result.error?.message || 'Error approving request')
+      alert(result.error || 'Error approving request')
       return
     }
 
-    // 2️⃣ Delete join request (CEO’s session allowed by RLS)
-    const { error: delErr } = await supabase
-      .from('corp_join_requests')
-      .delete()
-      .eq('id', req.id)
+    console.log('Approve API success:', result)
 
-    if (delErr) {
-      console.error('approve delete join request error', delErr)
-      setLastError(JSON.stringify(delErr))
-      alert('Member added, but could not delete join request.')
-      return
-    }
+        // 2️⃣ Delete join request (CEO's session allowed by RLS)
+        const { error: delErr } = await supabase
+          .from('corp_join_requests')
+          .delete()
+          .eq('id', req.id)
+
+        if (delErr) {
+          console.error('approve delete join request error', delErr)
+          setLastError(JSON.stringify(delErr))
+          alert('Member added successfully, but could not remove the join request. Please refresh the page.')
+          // Still update UI since member was added
+          setRequests((r) => r.filter((x) => x.id !== req.id))
+          setRawRequestsCount((c) => (c !== null ? Math.max(0, c - 1) : c))
+          return
+        }
 
     // 3️⃣ Update UI + local state
     setRequests((r) => r.filter((x) => x.id !== req.id))

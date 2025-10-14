@@ -167,7 +167,7 @@ export default function JoinCompany() {
       }
 
       if (existing) {
-        setMsg('You already have a pending join request for this company.')
+        setMsg('You already have a pending join request for this company. Please wait for approval.')
         setLoading(false)
         return
       }
@@ -191,11 +191,12 @@ export default function JoinCompany() {
         return
       }
 
-      setMsg(`✅ Join request sent to ${company.name}! Redirecting to your dashboard...`)
+          setMsg(`✅ Join request sent to ${company.name}! You'll be notified when approved.`)
 
-      setTimeout(() => {
-        router.push('/employee')
-      }, 2000)
+          // Don't redirect immediately - let user wait for approval
+          setTimeout(() => {
+            router.push('/onboarding')
+          }, 3000)
     } catch (err) {
       console.error('join-company unexpected error:', err)
       setMsg(err?.message || 'Something went wrong. Please try again.')
