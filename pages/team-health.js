@@ -174,7 +174,14 @@ export default function TeamHealth() {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span>Monitoring Active</span>
                 </div>
-                <Button variant="outline" size="small">
+                <Button 
+                  onClick={() => {
+                    // In a real app, this would generate and download a team health report
+                    alert('Team health report export feature coming soon! This would download a comprehensive wellness report as a PDF.');
+                  }}
+                  variant="outline" 
+                  size="small"
+                >
                   Export Report
                 </Button>
               </div>
@@ -279,7 +286,14 @@ export default function TeamHealth() {
                           <div className="text-xs text-gray-500">
                             Confidence: {alert.confidence}%
                           </div>
-                          <Button size="small" variant="outline">
+                          <Button 
+                            onClick={() => {
+                              // In a real app, this would take action on the team health alert
+                              alert(`Taking action on: ${alert.title}\n\nThis would open a detailed view with specific wellness recommendations and intervention options.`);
+                            }}
+                            size="small" 
+                            variant="outline"
+                          >
                             {alert.action}
                           </Button>
                         </div>

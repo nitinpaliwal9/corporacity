@@ -235,7 +235,14 @@ export default function Integrations() {
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                   <span>API Active</span>
                 </div>
-                <Button variant="outline" size="small">
+                <Button 
+                  onClick={() => {
+                    // In a real app, this would open a workflow creation modal
+                    alert('Workflow creation feature coming soon! This would open a visual workflow builder.');
+                  }}
+                  variant="outline" 
+                  size="small"
+                >
                   Create Workflow
                 </Button>
               </div>
@@ -303,6 +310,13 @@ export default function Integrations() {
                         ))}
                       </div>
                       <Button 
+                        onClick={() => {
+                          if (integration.status === 'connected') {
+                            alert(`Managing ${integration.name} integration. This would open the integration settings.`);
+                          } else {
+                            alert(`Connecting to ${integration.name}. This would open the OAuth connection flow.`);
+                          }
+                        }}
                         size="small" 
                         variant={integration.status === 'connected' ? 'outline' : 'primary'}
                         className="w-full"
@@ -350,7 +364,13 @@ export default function Integrations() {
                             </div>
                           ))}
                         </div>
-                        <Button size="small" variant="outline">
+                        <Button 
+                          onClick={() => {
+                            alert(`Editing workflow: ${workflow.name}. This would open the workflow editor.`);
+                          }}
+                          size="small" 
+                          variant="outline"
+                        >
                           Edit
                         </Button>
                       </div>

@@ -191,7 +191,14 @@ export default function Schedule() {
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                   <span>AI Active</span>
                 </div>
-                <Button variant="outline" size="small">
+                <Button 
+                  onClick={() => {
+                    // In a real app, this would open a meeting creation modal
+                    alert('Meeting creation feature coming soon! This would open a calendar to schedule meetings.');
+                  }}
+                  variant="outline" 
+                  size="small"
+                >
                   Create Meeting
                 </Button>
               </div>
@@ -242,7 +249,14 @@ export default function Schedule() {
                           <div className="text-xs text-gray-500">
                             Confidence: {rec.confidence}%
                           </div>
-                          <Button size="small" variant="outline">
+                          <Button 
+                            onClick={() => {
+                              // In a real app, this would execute the recommendation
+                              alert(`Executing: ${rec.action}\n\nThis would implement the AI recommendation for better scheduling.`);
+                            }}
+                            size="small" 
+                            variant="outline"
+                          >
                             {rec.action}
                           </Button>
                         </div>

@@ -243,7 +243,14 @@ export default function Security() {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span>Secure</span>
                 </div>
-                <Button variant="outline" size="small">
+                <Button 
+                  onClick={() => {
+                    // In a real app, this would generate and download a security report
+                    alert('Security report generation feature coming soon! This would create a comprehensive security audit report with compliance status and recommendations.');
+                  }}
+                  variant="outline" 
+                  size="small"
+                >
                   Security Report
                 </Button>
               </div>

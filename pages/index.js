@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import Head from 'next/head'
 import supabase from '../lib/supabaseClient'
 import Link from 'next/link'
 import Layout from '../components/ui/Layout'
@@ -80,8 +81,40 @@ export default function Home() {
   }
 
   return (
-    <Layout showHeader={true} showFooter={false}>
-      <div className="min-h-screen scroll-smooth">
+    <>
+      <Head>
+        {/* SEO Meta Tags for Google */}
+        <title>Corporacity - AI-Powered Team Management & Status Tracking</title>
+        <meta name="description" content="Transform team data into strategic intelligence with Corporacity. AI-powered analytics, smart scheduling, and real-time team status tracking for modern businesses." />
+        <meta name="keywords" content="team management, status tracking, AI analytics, team productivity, attendance tracking, workforce management, team collaboration" />
+        <meta name="author" content="Corporacity" />
+        
+        {/* Open Graph Meta Tags for Social Media */}
+        <meta property="og:title" content="Corporacity - AI-Powered Team Management & Status Tracking" />
+        <meta property="og:description" content="Transform team data into strategic intelligence with AI-powered analytics, smart scheduling, and real-time team status tracking." />
+        <meta property="og:image" content="/logo.webp" />
+        <meta property="og:url" content="https://corporacity.com" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Corporacity" />
+        
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Corporacity - AI-Powered Team Management" />
+        <meta name="twitter:description" content="Transform team data into strategic intelligence with AI-powered analytics and real-time tracking." />
+        <meta name="twitter:image" content="/logo.webp" />
+        
+        {/* Additional SEO Tags */}
+        <meta name="robots" content="index, follow" />
+        <meta name="googlebot" content="index, follow" />
+        <link rel="canonical" href="https://corporacity.com" />
+        
+        {/* Favicon */}
+        <link rel="icon" type="image/webp" href="/logo.webp" />
+        <link rel="shortcut icon" href="/logo.webp" />
+      </Head>
+      
+      <Layout showHeader={true} showFooter={false}>
+        <div className="min-h-screen scroll-smooth">
         {/* Hero Section */}
         <section className="relative overflow-hidden min-h-screen flex items-center">
           {/* Enhanced Background Elements */}
@@ -102,34 +135,34 @@ export default function Home() {
           <div className="absolute top-48 right-1/4 text-4xl opacity-10 animate-bounce" style={{ animationDelay: '3s' }}>👥</div>
           <div className="absolute bottom-20 left-1/3 text-4xl opacity-10 animate-bounce" style={{ animationDelay: '5s' }}>⚡</div>
 
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-12 sm:pb-16">
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate="visible"
               className="text-center"
             >
-              <motion.div variants={itemVariants} className="mb-8">
-                <div className="inline-flex items-center space-x-4 mb-8 p-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-slate-700/20 shadow-xl">
-                  <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300 p-2">
+              <motion.div variants={itemVariants} className="mb-6 sm:mb-8">
+                <div className="inline-flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6 sm:mb-8 p-3 sm:p-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-slate-700/20 shadow-xl">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300 p-2">
                     <img 
                       src="/logo.webp" 
                       alt="Corporacity Logo" 
                       className="w-full h-full object-contain"
                     />
                   </div>
-                  <div className="text-left">
-                    <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-white dark:via-blue-300 dark:to-indigo-300 bg-clip-text text-transparent">
+                  <div className="text-center sm:text-left">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-white dark:via-blue-300 dark:to-indigo-300 bg-clip-text text-transparent">
                       Corporacity
                     </h1>
-                    <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">Team Status Management</p>
+                    <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-300 font-medium">Team Status Management</p>
                   </div>
                 </div>
               </motion.div>
 
               <motion.h2 
                 variants={itemVariants}
-                className="text-6xl md:text-7xl font-bold text-gray-900 dark:text-white mb-8 leading-[1.5] pb-2"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gray-900 dark:text-white mb-6 sm:mb-8 leading-[1.4] pb-2"
               >
                 Transform Team Data Into
                 <span className="block bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400 bg-clip-text text-transparent pb-1">
@@ -139,25 +172,25 @@ export default function Home() {
 
               <motion.p 
                 variants={itemVariants}
-                className="text-2xl text-gray-700 dark:text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed font-medium"
+                className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-700 dark:text-gray-300 mb-8 sm:mb-12 max-w-4xl mx-auto leading-relaxed font-medium px-4"
               >
                 The world's first AI-powered team intelligence platform. Beyond status tracking - 
                 predict productivity patterns, prevent burnout, and optimize your workforce for maximum ROI.
               </motion.p>
 
-              <motion.div variants={itemVariants} className="mb-16">
-                <div className="inline-flex flex-col sm:flex-row gap-4 items-center">
-                <Button
-                  onClick={signInWithGoogle}
-                  loading={loading}
-                  size="large"
-                    className="premium-button bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white px-12 py-6 text-xl font-bold shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 border-0 relative overflow-hidden"
-                >
+              <motion.div variants={itemVariants} className="mb-12 sm:mb-16">
+                <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+                  <Button
+                    onClick={signInWithGoogle}
+                    loading={loading}
+                    size="large"
+                    className="premium-button bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white px-8 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 border-0 relative overflow-hidden w-full sm:w-auto touch-target"
+                  >
                     {loading ? 'Signing in...' : '🚀 Start Free Trial'}
-                </Button>
-                  <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
+                  </Button>
+                  <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 text-center">
                     <span className="text-sm">✨</span>
-                    <span className="text-sm font-medium">Free forever • No credit card required</span>
+                    <span className="text-xs sm:text-sm font-medium">Free forever • No credit card required</span>
                   </div>
                 </div>
               </motion.div>
@@ -534,16 +567,16 @@ export default function Home() {
                   whileHover={{ y: -5 }}
                 >
                   <Card className="h-full text-center hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm group">
-                    <div className="p-8">
+                    <div className="p-4 sm:p-6 lg:p-8">
                       {/* Rating Stars */}
-                      <div className="flex justify-center mb-4">
+                      <div className="flex justify-center mb-3 sm:mb-4">
                         {[...Array(testimonial.rating)].map((_, i) => (
-                          <span key={i} className="text-yellow-400 text-xl">⭐</span>
+                          <span key={i} className="text-yellow-400 text-lg sm:text-xl">⭐</span>
                         ))}
                       </div>
                       
                       {/* Avatar */}
-                      <div className="w-20 h-20 rounded-full mx-auto mb-6 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 overflow-hidden border-4 border-white dark:border-slate-700">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto mb-4 sm:mb-6 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 overflow-hidden border-4 border-white dark:border-slate-700">
                         <img 
                           src={testimonial.avatar} 
                           alt={`${testimonial.name} profile`}
@@ -555,19 +588,19 @@ export default function Home() {
                       </div>
                       
                       {/* Quote */}
-                      <div className="relative mb-6">
-                        <div className="text-4xl text-purple-200 absolute -top-2 -left-2">"</div>
-                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed relative z-10 italic">
+                      <div className="relative mb-4 sm:mb-6">
+                        <div className="text-2xl sm:text-3xl lg:text-4xl text-purple-200 absolute -top-1 sm:-top-2 -left-1 sm:-left-2">"</div>
+                        <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed relative z-10 italic px-2">
                           {testimonial.content}
                         </p>
-                        <div className="text-4xl text-purple-200 absolute -bottom-2 -right-2">"</div>
+                        <div className="text-2xl sm:text-3xl lg:text-4xl text-purple-200 absolute -bottom-1 sm:-bottom-2 -right-1 sm:-right-2">"</div>
                       </div>
                       
                       {/* Author Info */}
-                      <div className="border-t border-gray-100 dark:border-slate-700 pt-6">
-                        <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{testimonial.name}</h4>
-                        <p className="text-purple-600 dark:text-purple-400 font-semibold text-sm mb-1">{testimonial.role}</p>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">{testimonial.company}</p>
+                      <div className="border-t border-gray-100 dark:border-slate-700 pt-4 sm:pt-6">
+                        <h4 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1">{testimonial.name}</h4>
+                        <p className="text-purple-600 dark:text-purple-400 font-semibold text-xs sm:text-sm mb-1">{testimonial.role}</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">{testimonial.company}</p>
                       </div>
                     </div>
                   </Card>
@@ -676,13 +709,15 @@ export default function Home() {
                         </li>
                       ))}
                     </ul>
-                    <Button
-                      className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                      variant={plan.popular ? 'primary' : 'outline'}
-                      size="large"
-                    >
-                      {plan.cta}
-                    </Button>
+                    <Link href="/create-company" className="w-full">
+                      <Button
+                        className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                        variant={plan.popular ? 'primary' : 'outline'}
+                        size="large"
+                      >
+                        {plan.cta}
+                      </Button>
+                    </Link>
                   </Card>
                 </motion.div>
               ))}
@@ -804,19 +839,19 @@ export default function Home() {
               <p className="text-xl md:text-2xl text-white/95 mb-10 leading-relaxed font-medium drop-shadow-md">
                 Join thousands of teams already using Corporacity to stay connected and productive
               </p>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
                 <button
                   onClick={signInWithGoogle}
                   disabled={loading}
-                  className="premium-button bg-white text-gray-900 hover:bg-gray-50 font-bold shadow-2xl border-0 px-10 py-5 text-xl rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 hover:shadow-3xl"
+                  className="premium-button bg-white text-gray-900 hover:bg-gray-50 font-bold shadow-2xl border-0 px-6 sm:px-10 py-4 sm:py-5 text-lg sm:text-xl rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 hover:shadow-3xl w-full sm:w-auto touch-target"
                 >
                   {loading ? 'Signing in...' : '🚀 Start Free Trial'}
                 </button>
-                <Link href="/create-company">
+                <Link href="/create-company" className="w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="large"
-                    className="border-2 border-white text-white hover:bg-white hover:text-gray-900 font-bold shadow-2xl bg-white/10 hover:bg-white hover:shadow-3xl px-10 py-5 text-xl rounded-xl transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
+                    className="border-2 border-white text-white hover:bg-white hover:text-gray-900 font-bold shadow-2xl bg-white/10 hover:bg-white hover:shadow-3xl px-6 sm:px-10 py-4 sm:py-5 text-lg sm:text-xl rounded-xl transition-all duration-300 transform hover:scale-105 backdrop-blur-sm w-full touch-target"
                   >
                     🏢 Create Company
                   </Button>
@@ -851,19 +886,19 @@ export default function Home() {
                 Real-time updates, seamless collaboration, and powerful insights.
               </p>
               <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://twitter.com/corporacity" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
                   <span className="sr-only">Twitter</span>
                   <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                   </svg>
                 </a>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://linkedin.com/company/corporacity" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
                   <span className="sr-only">LinkedIn</span>
                   <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                   </svg>
                 </a>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                <a href="https://github.com/corporacity" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
                   <span className="sr-only">GitHub</span>
                   <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
@@ -888,11 +923,11 @@ export default function Home() {
             <div>
               <h4 className="text-lg font-semibold mb-4">Company</h4>
               <ul className="space-y-3">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Support</a></li>
+                <li><a href="/about" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
+                <li><a href="/blog" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+                <li><a href="/careers" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
+                <li><a href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                <li><a href="/support" className="text-gray-400 hover:text-white transition-colors">Support</a></li>
               </ul>
             </div>
           </div>
@@ -903,14 +938,15 @@ export default function Home() {
                 © 2024 Corporacity. All rights reserved.
               </p>
               <div className="flex space-x-6 mt-4 md:mt-0">
-                <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
-                <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a>
-                <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Cookie Policy</a>
+                <a href="/privacy-policy" className="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
+                <a href="/terms-of-service" className="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a>
+                <a href="/cookie-policy" className="text-gray-400 hover:text-white text-sm transition-colors">Cookie Policy</a>
               </div>
             </div>
           </div>
         </div>
       </footer>
-    </Layout>
+      </Layout>
+    </>
   )
 }

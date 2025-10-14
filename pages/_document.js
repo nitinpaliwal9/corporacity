@@ -5,6 +5,9 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        {/* Mobile Viewport */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        
         {/* PWA Meta Tags */}
         <meta name="application-name" content="Corporacity" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -24,9 +27,12 @@ export default function Document() {
         <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png" />
         <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-167x167.png" />
 
-        {/* Standard Icons */}
-        <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png" />
+        {/* Standard Icons - Using logo.webp */}
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/webp" href="/logo.webp" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/logo.webp" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/logo.webp" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="manifest" href="/manifest.json" />
 
         {/* Splash Screens for iOS */}

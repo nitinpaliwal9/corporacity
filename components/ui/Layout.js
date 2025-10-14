@@ -15,6 +15,7 @@ const Layout = ({
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [companyId, setCompanyId] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -47,7 +48,7 @@ const Layout = ({
               <div className="flex items-center space-x-4">
                 <Link 
                   href="/" 
-                  className="flex items-center space-x-3 group"
+                  className="flex items-center space-x-2 sm:space-x-3 group"
                   onClick={(e) => {
                     if (router.pathname === '/') {
                       e.preventDefault()
@@ -55,15 +56,15 @@ const Layout = ({
                     }
                   }}
                 >
-                  <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 p-1">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 p-1">
                     <img 
                       src="/logo.webp" 
                       alt="Corporacity Logo" 
                       className="w-full h-full object-contain"
                     />
                   </div>
-                  <div>
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                  <div className="hidden sm:block">
+                    <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
                       Corporacity
                     </h1>
                     <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Team Status Management</p>
@@ -208,7 +209,7 @@ const Layout = ({
                 )}
               </nav>
 
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 {user && companyId && (
                   <NotificationCenter user={user} companyId={companyId} />
                 )}
@@ -222,13 +223,191 @@ const Layout = ({
                 {router.pathname === '/' && !user && (
                   <Link 
                     href="/create-company"
-                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                    className="hidden sm:block bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
                   >
                     Get Started
                   </Link>
                 )}
+                
+                {/* Mobile menu button */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {mobileMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
               </div>
             </div>
+            
+            {/* Mobile menu */}
+            {mobileMenuOpen && (
+              <div className="md:hidden bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700">
+                <div className="px-4 py-4 space-y-4">
+                  {router.pathname === '/' ? (
+                    // Homepage mobile navigation
+                    <>
+                      <a 
+                        href="#features" 
+                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-2"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setMobileMenuOpen(false)
+                          document.getElementById('features')?.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                          })
+                        }}
+                      >
+                        Features
+                      </a>
+                      <a 
+                        href="#pricing" 
+                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-2"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setMobileMenuOpen(false)
+                          document.getElementById('pricing')?.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                          })
+                        }}
+                      >
+                        Pricing
+                      </a>
+                      <a 
+                        href="#faq" 
+                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-2"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setMobileMenuOpen(false)
+                          document.getElementById('faq')?.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                          })
+                        }}
+                      >
+                        FAQ
+                      </a>
+                      <Link 
+                        href="/employee" 
+                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-2"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Demo
+                      </Link>
+                    </>
+                  ) : (
+                    // App mobile navigation
+                    <>
+                      <Link 
+                        href="/employee" 
+                        className={`block py-2 transition-colors duration-200 ${
+                          router.pathname === '/employee' 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Dashboard
+                      </Link>
+                      <Link 
+                        href="/analytics" 
+                        className={`block py-2 transition-colors duration-200 ${
+                          router.pathname === '/analytics' 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        AI Analytics
+                      </Link>
+                      <Link 
+                        href="/schedule" 
+                        className={`block py-2 transition-colors duration-200 ${
+                          router.pathname === '/schedule' 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Smart Schedule
+                      </Link>
+                      <Link 
+                        href="/team-health" 
+                        className={`block py-2 transition-colors duration-200 ${
+                          router.pathname === '/team-health' 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Team Health
+                      </Link>
+                      <Link 
+                        href="/integrations" 
+                        className={`block py-2 transition-colors duration-200 ${
+                          router.pathname === '/integrations' 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Integrations
+                      </Link>
+                      <Link 
+                        href="/security" 
+                        className={`block py-2 transition-colors duration-200 ${
+                          router.pathname === '/security' 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Security
+                      </Link>
+                      <Link 
+                        href="/mobile" 
+                        className={`block py-2 transition-colors duration-200 ${
+                          router.pathname === '/mobile' 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Mobile
+                      </Link>
+                      <Link 
+                        href="/ceo" 
+                        className={`block py-2 transition-colors duration-200 ${
+                          router.pathname === '/ceo' 
+                            ? 'text-blue-600 dark:text-blue-400' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        CEO Panel
+                      </Link>
+                    </>
+                  )}
+                  
+                  {router.pathname === '/' && !user && (
+                    <Link 
+                      href="/create-company"
+                      className="block bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 text-center mt-4"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Get Started
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </header>
       )}

@@ -17,6 +17,28 @@
     font-size: 16px !important;
   }
   
+  /* Enhanced touch interactions */
+  button, .button, a {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* Improved tap targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Smooth scrolling for mobile */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
   /* Touch-friendly button sizes */
   .touch-button {
     min-height: 44px;

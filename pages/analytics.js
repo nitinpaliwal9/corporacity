@@ -207,7 +207,14 @@ export default function Analytics() {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span>AI Active</span>
                 </div>
-                <Button variant="outline" size="small">
+                <Button 
+                  onClick={() => {
+                    // In a real app, this would generate and download a report
+                    alert('Export feature coming soon! This would download your analytics report as a PDF.');
+                  }}
+                  variant="outline" 
+                  size="small"
+                >
                   Export Report
                 </Button>
               </div>
@@ -294,7 +301,14 @@ export default function Analytics() {
                           <div className="text-xs text-gray-500">
                             Confidence: {insight.confidence}%
                           </div>
-                          <Button size="small" variant="outline">
+                          <Button 
+                            onClick={() => {
+                              // In a real app, this would open a detailed view or action modal
+                              alert(`Taking action on: ${insight.title}\n\nThis would open a detailed view with specific recommendations.`);
+                            }}
+                            size="small" 
+                            variant="outline"
+                          >
                             Take Action
                           </Button>
                         </div>

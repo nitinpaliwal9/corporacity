@@ -239,7 +239,14 @@ export default function Mobile() {
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                   <span>Mobile Active</span>
                 </div>
-                <Button variant="outline" size="small">
+                <Button 
+                  onClick={() => {
+                    // In a real app, this would redirect to app stores or download page
+                    alert('Mobile app download feature coming soon! This would redirect to the App Store and Google Play Store for downloading the Corporacity mobile app.');
+                  }}
+                  variant="outline" 
+                  size="small"
+                >
                   Download App
                 </Button>
               </div>

@@ -415,7 +415,14 @@ export default function AdminPanel() {
                           <p className="font-medium">Two-Factor Authentication</p>
                           <p className="text-sm text-gray-600">Require 2FA for all users</p>
                         </div>
-                        <Button variant="outline" size="small">
+                        <Button 
+                          onClick={() => {
+                            // In a real app, this would open configuration settings
+                            alert('Configuration feature coming soon! This would open the database configuration panel.');
+                          }}
+                          variant="outline" 
+                          size="small"
+                        >
                           Configure
                         </Button>
                       </div>
@@ -424,7 +431,14 @@ export default function AdminPanel() {
                           <p className="font-medium">Session Timeout</p>
                           <p className="text-sm text-gray-600">Auto-logout after inactivity</p>
                         </div>
-                        <Button variant="outline" size="small">
+                        <Button 
+                          onClick={() => {
+                            // In a real app, this would open configuration settings
+                            alert('Configuration feature coming soon! This would open the database configuration panel.');
+                          }}
+                          variant="outline" 
+                          size="small"
+                        >
                           Configure
                         </Button>
                       </div>
@@ -433,7 +447,14 @@ export default function AdminPanel() {
                           <p className="font-medium">IP Restrictions</p>
                           <p className="text-sm text-gray-600">Limit access by IP address</p>
                         </div>
-                        <Button variant="outline" size="small">
+                        <Button 
+                          onClick={() => {
+                            // In a real app, this would open configuration settings
+                            alert('Configuration feature coming soon! This would open the database configuration panel.');
+                          }}
+                          variant="outline" 
+                          size="small"
+                        >
                           Configure
                         </Button>
                       </div>
