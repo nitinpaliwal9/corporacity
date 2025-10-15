@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Layout from '../components/ui/Layout';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { useToast, ToastContainer } from '../components/ui/Toast';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -12,12 +13,13 @@ export default function Contact() {
     subject: '',
     message: ''
   });
+  const { toasts, success, removeToast } = useToast();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle form submission here
     console.log('Form submitted:', formData);
-    alert('Thank you for your message! We\'ll get back to you soon.');
+    success('Thank you for your message! We\'ll get back to you soon.');
   };
 
   const handleChange = (e) => {
@@ -290,6 +292,9 @@ export default function Contact() {
             </div>
           </div>
         </div>
+        
+        {/* Toast Notifications */}
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
       </Layout>
     </>
   );

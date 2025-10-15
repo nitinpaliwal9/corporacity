@@ -3,10 +3,12 @@ import Head from 'next/head';
 import Layout from '../components/ui/Layout';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { useToast, ToastContainer } from '../components/ui/Toast';
 
 export default function Support() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const { toasts, info, removeToast } = useToast();
 
   const categories = [
     { id: 'all', name: 'All Topics', icon: '📚' },
@@ -306,7 +308,7 @@ export default function Support() {
                   <Button 
                     onClick={() => {
                       // In a real app, this would open a chat widget
-                      alert('Chat feature coming soon! For now, please email us at support@corporacity.com');
+                      info('Chat feature coming soon! For now, please email us at support@corporacity.com');
                     }}
                     className="w-full"
                   >
@@ -332,6 +334,9 @@ export default function Support() {
             </div>
           </div>
         </div>
+        
+        {/* Toast Notifications */}
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
       </Layout>
     </>
   );

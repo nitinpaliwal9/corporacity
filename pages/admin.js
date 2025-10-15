@@ -79,6 +79,7 @@ export default function AdminPanel() {
 
   const loadAuditLogs = async (companyId) => {
     try {
+      // First try with the join
       const { data, error } = await supabase
         .from('corp_audit_logs')
         .select(`
@@ -90,6 +91,12 @@ export default function AdminPanel() {
         .limit(100)
 
       if (error) {
+        // If the table doesn't exist or join fails, try without join
+        if (error.code === 'PGRST200' || error.message.includes('relationship') || error.message.includes('does not exist')) {
+          console.warn('Audit logs table not found, using empty data')
+          setAuditLogs([])
+          return
+        }
         console.error('Error loading audit logs:', error)
         return
       }
@@ -97,6 +104,7 @@ export default function AdminPanel() {
       setAuditLogs(data || [])
     } catch (err) {
       console.error('Error loading audit logs:', err)
+      setAuditLogs([])
     }
   }
 
@@ -118,19 +126,33 @@ export default function AdminPanel() {
         .eq('company_id', companyId)
         .gte('timestamp', sevenDaysAgo.toISOString())
 
-      // Get failed logins (from audit logs)
-      const { count: failedLogins } = await supabase
-        .from('corp_audit_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('company_id', companyId)
-        .eq('action', 'login_failed')
+      // Get failed logins (from audit logs) - with fallback
+      let failedLogins = 0
+      try {
+        const { count } = await supabase
+          .from('corp_audit_logs')
+          .select('*', { count: 'exact', head: true })
+          .eq('company_id', companyId)
+          .eq('action', 'login_failed')
+        failedLogins = count || 0
+      } catch (err) {
+        console.warn('Audit logs table not available for failed logins count')
+        failedLogins = 0
+      }
 
-      // Get suspicious activity
-      const { count: suspiciousActivity } = await supabase
-        .from('corp_audit_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('company_id', companyId)
-        .eq('severity', 'high')
+      // Get suspicious activity - with fallback
+      let suspiciousActivity = 0
+      try {
+        const { count } = await supabase
+          .from('corp_audit_logs')
+          .select('*', { count: 'exact', head: true })
+          .eq('company_id', companyId)
+          .eq('severity', 'high')
+        suspiciousActivity = count || 0
+      } catch (err) {
+        console.warn('Audit logs table not available for suspicious activity count')
+        suspiciousActivity = 0
+      }
 
       setSecurityMetrics({
         totalUsers: totalUsers || 0,

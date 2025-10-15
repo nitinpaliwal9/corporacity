@@ -7,6 +7,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
 import supabase from '../lib/supabaseClient';
 import RealAnalyticsService from '../lib/realAnalytics';
+import { useToast, ToastContainer } from '../components/ui/Toast';
 
 export default function Analytics() {
   const [user, setUser] = useState(null);
@@ -15,6 +16,7 @@ export default function Analytics() {
   const [analytics, setAnalytics] = useState(null);
   const [insights, setInsights] = useState([]);
   const [predictions, setPredictions] = useState([]);
+  const { toasts, info, removeToast } = useToast();
 
   useEffect(() => {
     const getUser = async () => {
@@ -198,7 +200,7 @@ export default function Analytics() {
                 <Button 
                   onClick={() => {
                     // In a real app, this would generate and download a report
-                    alert('Export feature coming soon! This would download your analytics report as a PDF.');
+                    info('Export feature coming soon! This would download your analytics report as a PDF.');
                   }}
                   variant="outline" 
                   size="small"
@@ -293,7 +295,7 @@ export default function Analytics() {
                           <Button 
                             onClick={() => {
                               // In a real app, this would open a detailed view or action modal
-                              alert(`Taking action on: ${insight.title}\n\nThis would open a detailed view with specific recommendations.`);
+                              info(`Taking action on: ${insight.title} - This would open a detailed view with specific recommendations.`);
                             }}
                             size="small" 
                             variant="outline"
@@ -350,6 +352,9 @@ export default function Analytics() {
           </motion.div>
         </div>
       </div>
+      
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </Layout>
   );
 }

@@ -12,6 +12,7 @@ import Alert from '../components/ui/Alert'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import ProgressBar from '../components/ui/ProgressBar'
 import AnimatedCounter from '../components/ui/AnimatedCounter'
+import { useToast, ToastContainer } from '../components/ui/Toast'
 
 export default function CeoDashboard() {
   const [feed, setFeed] = useState([])
@@ -19,12 +20,12 @@ export default function CeoDashboard() {
   const [company, setCompany] = useState(null)
   const [user, setUser] = useState(null)
   const [stats, setStats] = useState({ present: 0, late: 0, leave: 0, visit: 0 })
-  const [debugVisible, setDebugVisible] = useState(true)
   const [lastError, setLastError] = useState(null)
   const [rawRequestsCount, setRawRequestsCount] = useState(null)
   const [loading, setLoading] = useState(true)
   const ownedCompanyIdsRef = useRef([])
   const router = useRouter()
+  const { toasts, success, error, removeToast } = useToast()
 
   useEffect(() => {
     let statusChannel = null
@@ -359,7 +360,7 @@ export default function CeoDashboard() {
         setRequests((r) => r.filter((x) => x.id !== req.id))
         setRawRequestsCount((c) => (c !== null ? Math.max(0, c - 1) : c))
         setLastError(null)
-        alert('✅ Member approved successfully!')
+        success('Member approved successfully!')
         
         // Refresh the requests list to ensure UI is up to date
         setTimeout(() => {
@@ -388,11 +389,11 @@ export default function CeoDashboard() {
           } else if (membershipError.message.includes('row-level security policy')) {
             console.log('RLS policy blocking membership creation')
             setLastError('RLS policy error - need to update database policies')
-            alert('❌ Database security policy is blocking this action. Please run the RLS fix script in Supabase.')
+            error('Database security policy is blocking this action. Please run the RLS fix script in Supabase.')
             return
           } else {
             setLastError(JSON.stringify(membershipError))
-            alert(`Failed to add member: ${membershipError.message}`)
+            error(`Failed to add member: ${membershipError.message}`)
             return
           }
         } else {
@@ -411,9 +412,9 @@ export default function CeoDashboard() {
           setLastError(JSON.stringify(delErr))
           
           if (delErr.message.includes('row-level security policy')) {
-            alert('❌ Member added but cannot delete join request due to security policy. Please refresh the page.')
+            error('Member added but cannot delete join request due to security policy. Please refresh the page.')
           } else {
-            alert('❌ Member added but could not remove the join request. Please refresh the page.')
+            error('Member added but could not remove the join request. Please refresh the page.')
           }
           
           // Still update UI since member was added
@@ -435,7 +436,7 @@ export default function CeoDashboard() {
         setRequests((r) => r.filter((x) => x.id !== req.id))
         setRawRequestsCount((c) => (c !== null ? Math.max(0, c - 1) : c))
         setLastError(null)
-        alert('✅ Member approved successfully!')
+        success('Member approved successfully!')
         
         // Refresh the requests list to ensure UI is up to date
         setTimeout(() => {
@@ -447,7 +448,7 @@ export default function CeoDashboard() {
     } catch (err) {
       console.error('approve exception', err)
       setLastError(String(err))
-      alert('Unexpected error approving request')
+      error('Unexpected error approving request')
     }
   }
 
@@ -494,8 +495,8 @@ export default function CeoDashboard() {
           className="flex items-center justify-between mb-8"
         >
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">CEO Dashboard</h1>
-            <p className="text-gray-600 mt-1">Manage your team and monitor company activity</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">CEO Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-1">Manage your team and monitor company activity</p>
           </div>
           <div className="flex space-x-3">
             <Button
@@ -550,21 +551,21 @@ export default function CeoDashboard() {
             <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                     {company.name}
                   </h3>
                   <div className="space-y-1">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       <span className="font-medium">Company ID:</span> {company.code}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       <span className="font-medium">Owner:</span> {user?.email}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
-                  <p className="text-sm text-gray-500 mt-1">Active</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Active</p>
                 </div>
               </div>
             </Card>
@@ -591,7 +592,7 @@ export default function CeoDashboard() {
                 <div className="flex justify-between items-center">
                   <div>
                     <Card.Title>Today's Team Overview</Card.Title>
-                    <p className="text-sm text-gray-600 mt-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
                       Real-time status updates from your team members
                     </p>
                   </div>
@@ -620,7 +621,7 @@ export default function CeoDashboard() {
                     <div className="text-3xl font-bold text-green-600 mb-1">
                       <AnimatedCounter value={stats.present} />
                     </div>
-                    <div className="text-sm text-gray-600">Present</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">Present</div>
                   </div>
                   
                   <div className="text-center">
@@ -630,7 +631,7 @@ export default function CeoDashboard() {
                     <div className="text-3xl font-bold text-yellow-600 mb-1">
                       <AnimatedCounter value={stats.late} />
                     </div>
-                    <div className="text-sm text-gray-600">Late</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">Late</div>
                   </div>
                   
                   <div className="text-center">
@@ -640,7 +641,7 @@ export default function CeoDashboard() {
                     <div className="text-3xl font-bold text-red-600 mb-1">
                       <AnimatedCounter value={stats.leave} />
                     </div>
-                    <div className="text-sm text-gray-600">On Leave</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">On Leave</div>
                   </div>
                   
                   <div className="text-center">
@@ -650,7 +651,7 @@ export default function CeoDashboard() {
                     <div className="text-3xl font-bold text-blue-600 mb-1">
                       <AnimatedCounter value={stats.visit} />
                     </div>
-                    <div className="text-sm text-gray-600">On Visit</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">On Visit</div>
                   </div>
                 </div>
               </Card.Content>
@@ -668,7 +669,7 @@ export default function CeoDashboard() {
           <Card>
             <Card.Header>
               <Card.Title>Join Requests</Card.Title>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
                 Review and approve new team member requests
               </p>
             </Card.Header>
@@ -677,8 +678,8 @@ export default function CeoDashboard() {
               {requests.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-4xl mb-4">👥</div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No pending requests</h3>
-                  <p className="text-gray-600">All join requests have been processed</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No pending requests</h3>
+                  <p className="text-gray-600 dark:text-gray-300">All join requests have been processed</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -697,13 +698,13 @@ export default function CeoDashboard() {
                           </span>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-900">
+                          <h4 className="font-semibold text-gray-900 dark:text-white">
                             {request.corp_profiles?.full_name || request.corp_profiles?.email || request.user_id}
                           </h4>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-gray-600 dark:text-gray-300">
                             Requested to join {request.corp_companies?.name || 'your company'}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             {new Date(request.created_at).toLocaleString()}
                           </p>
                         </div>
@@ -741,7 +742,7 @@ export default function CeoDashboard() {
           <Card>
             <Card.Header>
               <Card.Title>Live Activity Feed</Card.Title>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
                 Real-time updates from your team members
               </p>
             </Card.Header>
@@ -750,8 +751,8 @@ export default function CeoDashboard() {
               {feed.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="text-4xl mb-4">📊</div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No activity yet</h3>
-                  <p className="text-gray-600">Team activity will appear here in real-time</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No activity yet</h3>
+                  <p className="text-gray-600 dark:text-gray-300">Team activity will appear here in real-time</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -770,15 +771,15 @@ export default function CeoDashboard() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                          <span className="font-semibold text-gray-900">
+                          <span className="font-semibold text-gray-900 dark:text-white">
                             {item.corp_profiles?.full_name || item.user_id}
                           </span>
-                          <span className="text-sm text-gray-500">•</span>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-gray-500 dark:text-gray-400">•</span>
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
                             {new Date(item.timestamp).toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-gray-700 mt-1">
+                        <p className="text-gray-700 dark:text-gray-300 mt-1">
                           Status: <span className="font-medium capitalize">{item.type}</span>
                           {item.message && <span> - {item.message}</span>}
                         </p>
@@ -791,73 +792,10 @@ export default function CeoDashboard() {
           </Card>
         </motion.div>
 
-        {/* Debug Panel */}
-        {debugVisible && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="fixed right-4 bottom-4 w-96 max-w-full bg-white border rounded-xl p-4 shadow-xl text-xs z-50"
-          >
-            <div className="flex justify-between items-center mb-3">
-              <strong className="text-sm">Debug Panel</strong>
-              <Button
-                onClick={() => setDebugVisible(false)}
-                variant="ghost"
-                size="small"
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </Button>
-            </div>
-            <div className="space-y-2 text-xs">
-              <div><strong>User ID:</strong> {user?.id || '—'}</div>
-              <div><strong>Email:</strong> {user?.email || '—'}</div>
-              <div><strong>Company:</strong> {company ? company.name : '—'}</div>
-              <div><strong>Requests:</strong> {requests.length}</div>
-              <div><strong>Feed Items:</strong> {feed.length}</div>
-              {lastError && (
-                <div className="text-red-600">
-                  <strong>Error:</strong> {lastError}
-                </div>
-              )}
-              <div className="pt-2 space-y-1">
-                <Button
-                  onClick={() => {
-                    setLoading(true)
-                    window.location.reload()
-                  }}
-                  variant="outline"
-                  size="small"
-                  className="text-xs w-full"
-                >
-                  🔄 Refresh Data
-                </Button>
-                <Button
-                  onClick={async () => {
-                    console.log('=== DEBUG: Checking join requests in database ===')
-                    if (ownedCompanyIdsRef.current.length > 0) {
-                      const { data, error } = await supabase
-                        .from('corp_join_requests')
-                        .select('*')
-                        .in('company_id', ownedCompanyIdsRef.current)
-                      console.log('Raw join requests in DB:', data)
-                      console.log('Error:', error)
-                      alert(`Found ${data?.length || 0} join requests in database. Check console for details.`)
-                    } else {
-                      alert('No company IDs available')
-                    }
-                  }}
-                  variant="outline"
-                  size="small"
-                  className="text-xs w-full"
-                >
-                  🔍 Debug DB
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
       </div>
+      
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </Layout>
   )
 }

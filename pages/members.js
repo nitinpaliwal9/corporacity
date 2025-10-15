@@ -2,7 +2,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import supabase from '../lib/supabaseClient'
 import Layout from '../components/ui/Layout'
 import Button from '../components/ui/Button'
@@ -12,6 +12,7 @@ import Alert from '../components/ui/Alert'
 import Avatar from '../components/ui/Avatar'
 import Badge from '../components/ui/Badge'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
+import Modal from '../components/ui/Modal'
 
 export default function MembersDirectory() {
   const [members, setMembers] = useState([])
@@ -22,6 +23,11 @@ export default function MembersDirectory() {
   const [filterRole, setFilterRole] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [error, setError] = useState('')
+  const [designations, setDesignations] = useState([])
+  const [editingMember, setEditingMember] = useState(null)
+  const [selectedDesignation, setSelectedDesignation] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -53,10 +59,13 @@ export default function MembersDirectory() {
 
         setCompany(membership.corp_companies)
 
-        // Get all company members
-        await fetchMembers(membership.company_id)
+        // Get all company members and designations
+        await Promise.all([
+          fetchMembers(membership.company_id),
+          fetchDesignations(membership.company_id)
+        ])
       } catch (err) {
-        console.error('Error loading data:', err)
+        // Error loading data - could add toast notification here
         setError('Failed to load member data')
       } finally {
         setLoading(false)
@@ -66,22 +75,49 @@ export default function MembersDirectory() {
     loadData()
   }, [router])
 
+  const fetchDesignations = async (companyId) => {
+    try {
+      const { data, error } = await supabase
+        .from('corp_designations')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('is_active', true)
+        .order('level', { ascending: true })
+
+      if (error) {
+        // Error fetching designations - could add toast notification here
+        return
+      }
+
+      setDesignations(data || [])
+    } catch (err) {
+      // Error fetching designations - could add toast notification here
+    }
+  }
+
   const fetchMembers = async (companyId) => {
     try {
-      // First, get all memberships for the company
+      // First, get all memberships for the company with designation info
       const { data: memberships, error: membershipsError } = await supabase
         .from('corp_memberships')
         .select(`
           id,
           user_id,
           role,
-          created_at
+          designation_id,
+          department,
+          employee_id,
+          hire_date,
+          manager_id,
+          is_active,
+          created_at,
+          corp_designations(name, department, level)
         `)
         .eq('company_id', companyId)
         .order('created_at', { ascending: false })
 
       if (membershipsError) {
-        console.error('Error fetching memberships:', membershipsError)
+        // Error fetching memberships - could add toast notification here
         setError('Failed to fetch members')
         return
       }
@@ -106,7 +142,7 @@ export default function MembersDirectory() {
         .in('id', userIds)
 
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError)
+        // Error fetching profiles - could add toast notification here
         setError('Failed to fetch member profiles')
         return
       }
@@ -146,7 +182,7 @@ export default function MembersDirectory() {
 
       setMembers(membersWithStatus)
     } catch (err) {
-      console.error('Error fetching members with status:', err)
+      // Error fetching members with status - could add toast notification here
       setError('Failed to fetch member statuses')
     }
   }
@@ -181,6 +217,58 @@ export default function MembersDirectory() {
         {config.label}
       </Badge>
     )
+  }
+
+  const handleMemberDoubleClick = (member) => {
+    // Only allow owners and managers to edit designations
+    if (user?.id !== company?.owner_id && user?.role !== 'manager') {
+      return
+    }
+    
+    setEditingMember(member)
+    setSelectedDesignation(member.designation_id || '')
+    setIsModalOpen(true)
+  }
+
+  const handleUpdateDesignation = async () => {
+    if (!editingMember || !selectedDesignation) return
+
+    setIsUpdating(true)
+    try {
+      const { error } = await supabase
+        .from('corp_memberships')
+        .update({ designation_id: selectedDesignation })
+        .eq('id', editingMember.id)
+
+      if (error) {
+        // Error updating designation - could add toast notification here
+        setError('Failed to update designation')
+        return
+      }
+
+      // Update local state
+      setMembers(prev => prev.map(member => 
+        member.id === editingMember.id 
+          ? { ...member, designation_id: selectedDesignation }
+          : member
+      ))
+
+      setIsModalOpen(false)
+      setEditingMember(null)
+      setSelectedDesignation('')
+    } catch (err) {
+      // Error updating designation - could add toast notification here
+      setError('Failed to update designation')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const getDesignationName = (member) => {
+    if (member.corp_designations) {
+      return member.corp_designations.name
+    }
+    return 'No Designation'
   }
 
   const filteredMembers = members.filter(member => {
@@ -368,11 +456,27 @@ export default function MembersDirectory() {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900 truncate">
+                            <h3 
+                              className={`text-lg font-semibold text-gray-900 truncate ${
+                                (user?.id === company?.owner_id || user?.role === 'manager') 
+                                  ? 'cursor-pointer hover:text-blue-600 transition-colors' 
+                                  : ''
+                              }`}
+                              onDoubleClick={() => handleMemberDoubleClick(member)}
+                              title={
+                                (user?.id === company?.owner_id || user?.role === 'manager') 
+                                  ? 'Double-click to edit designation' 
+                                  : ''
+                              }
+                            >
                               {member.corp_profiles.full_name || 'No Name'}
                             </h3>
                             {getRoleBadge(member.role)}
                           </div>
+                          
+                          <p className="text-sm text-gray-500 mb-1 truncate">
+                            {getDesignationName(member)}
+                          </p>
                           
                           <p className="text-sm text-gray-600 mb-2 truncate">
                             {member.corp_profiles.email}
@@ -443,6 +547,83 @@ export default function MembersDirectory() {
             </motion.div>
           )}
         </motion.div>
+
+        {/* Designation Edit Modal */}
+        <AnimatePresence>
+          {isModalOpen && (
+            <Modal
+              isOpen={isModalOpen}
+              onClose={() => {
+                setIsModalOpen(false)
+                setEditingMember(null)
+                setSelectedDesignation('')
+              }}
+              title="Update Designation"
+            >
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Employee
+                  </label>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {editingMember?.corp_profiles?.full_name || 'No Name'}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {editingMember?.corp_profiles?.email}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Designation
+                  </label>
+                  <p className="text-sm text-gray-600">
+                    {editingMember ? getDesignationName(editingMember) : 'No Designation'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select New Designation
+                  </label>
+                  <select
+                    value={selectedDesignation}
+                    onChange={(e) => setSelectedDesignation(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">No Designation</option>
+                    {designations.map((designation) => (
+                      <option key={designation.id} value={designation.id}>
+                        {designation.name} {designation.department ? `(${designation.department})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button
+                    onClick={() => {
+                      setIsModalOpen(false)
+                      setEditingMember(null)
+                      setSelectedDesignation('')
+                    }}
+                    variant="outline"
+                    disabled={isUpdating}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleUpdateDesignation}
+                    variant="primary"
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? 'Updating...' : 'Update Designation'}
+                  </Button>
+                </div>
+              </div>
+            </Modal>
+          )}
+        </AnimatePresence>
       </div>
     </Layout>
   )

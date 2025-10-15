@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
 import Layout from '../components/ui/Layout';
 import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import { useToast, ToastContainer } from '../components/ui/Toast';
 
 export default function Blog() {
+  const [email, setEmail] = useState('');
+  const { toasts, success, error, removeToast } = useToast();
+  
   const blogPosts = [
     {
       id: 1,
@@ -233,10 +238,10 @@ export default function Blog() {
                       onClick={() => {
                         const email = document.querySelector('input[type="email"]').value;
                         if (email) {
-                          alert(`Thank you for subscribing with ${email}! We'll send you updates soon.`);
+                          success(`Thank you for subscribing with ${email}! We'll send you updates soon.`);
                           document.querySelector('input[type="email"]').value = '';
                         } else {
-                          alert('Please enter your email address first.');
+                          error('Please enter your email address first.');
                         }
                       }}
                       className="bg-white text-blue-600 hover:bg-gray-50 px-6 py-3 rounded-lg font-semibold transition-colors duration-200"
@@ -252,6 +257,9 @@ export default function Blog() {
             </div>
           </div>
         </div>
+        
+        {/* Toast Notifications */}
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
       </Layout>
     </>
   );

@@ -16,6 +16,8 @@ const Layout = ({
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [companyId, setCompanyId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -24,21 +26,45 @@ const Layout = ({
       if (user) {
         setUser(user);
         
-        // Get user's company
+        // Get user's company and role
         const { data: membership } = await supabase
           .from('corp_memberships')
-          .select('company_id')
+          .select('company_id, role')
           .eq('user_id', user.id)
           .single();
         
         if (membership) {
           setCompanyId(membership.company_id);
+          setUserRole(membership.role);
+          
+          // Check if user is owner of any company
+          const { data: ownedCompany } = await supabase
+            .from('corp_companies')
+            .select('id')
+            .eq('owner_id', user.id)
+            .single();
+          
+          setIsOwner(!!ownedCompany);
         }
       }
     };
 
     getUser();
   }, []);
+
+  // Function to get the appropriate dashboard URL for the user
+  const getDashboardUrl = () => {
+    if (!user) return '/';
+    
+    // If user is owner of a company, go to CEO dashboard
+    if (isOwner) return '/ceo';
+    
+    // If user is manager, go to admin dashboard
+    if (userRole === 'manager') return '/admin';
+    
+    // Default to employee dashboard
+    return '/employee';
+  };
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 ${className}`}>
@@ -48,10 +74,10 @@ const Layout = ({
             <div className="flex justify-between items-center h-14 sm:h-16">
               <div className="flex items-center space-x-4">
                 <Link 
-                  href="/" 
+                  href={getDashboardUrl()} 
                   className="flex items-center space-x-2 sm:space-x-3 group"
                   onClick={(e) => {
-                    if (router.pathname === '/') {
+                    if (router.pathname === '/' && !user) {
                       e.preventDefault()
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }
@@ -152,54 +178,24 @@ const Layout = ({
                       AI Analytics
                     </Link>
                     <Link 
-                      href="/schedule" 
+                      href="/members" 
                       className={`text-sm font-medium transition-colors duration-200 ${
-                        router.pathname === '/schedule' 
+                        router.pathname === '/members' 
                           ? 'text-blue-600 dark:text-blue-400' 
                           : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
                       }`}
                     >
-                      Smart Schedule
+                      Team Members
                     </Link>
                     <Link 
-                      href="/team-health" 
+                      href="/admin" 
                       className={`text-sm font-medium transition-colors duration-200 ${
-                        router.pathname === '/team-health' 
+                        router.pathname === '/admin' 
                           ? 'text-blue-600 dark:text-blue-400' 
                           : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
                       }`}
                     >
-                      Team Health
-                    </Link>
-                    <Link 
-                      href="/integrations" 
-                      className={`text-sm font-medium transition-colors duration-200 ${
-                        router.pathname === '/integrations' 
-                          ? 'text-blue-600 dark:text-blue-400' 
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                      }`}
-                    >
-                      Integrations
-                    </Link>
-                    <Link 
-                      href="/security" 
-                      className={`text-sm font-medium transition-colors duration-200 ${
-                        router.pathname === '/security' 
-                          ? 'text-blue-600 dark:text-blue-400' 
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                      }`}
-                    >
-                      Security
-                    </Link>
-                    <Link 
-                      href="/mobile" 
-                      className={`text-sm font-medium transition-colors duration-200 ${
-                        router.pathname === '/mobile' 
-                          ? 'text-blue-600 dark:text-blue-400' 
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                      }`}
-                    >
-                      Mobile
+                      Admin Panel
                     </Link>
                     <Link 
                       href="/ceo" 
@@ -334,59 +330,26 @@ const Layout = ({
                         AI Analytics
                       </Link>
                       <Link 
-                        href="/schedule" 
+                        href="/members" 
                         className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
-                          router.pathname === '/schedule' 
+                          router.pathname === '/members' 
                             ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
                             : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Smart Schedule
+                        Team Members
                       </Link>
                       <Link 
-                        href="/team-health" 
+                        href="/admin" 
                         className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
-                          router.pathname === '/team-health' 
+                          router.pathname === '/admin' 
                             ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
                             : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Team Health
-                      </Link>
-                      <Link 
-                        href="/integrations" 
-                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
-                          router.pathname === '/integrations' 
-                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }`}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Integrations
-                      </Link>
-                      <Link 
-                        href="/security" 
-                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
-                          router.pathname === '/security' 
-                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }`}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Security
-                      </Link>
-                      <Link 
-                        href="/mobile" 
-                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
-                          router.pathname === '/mobile' 
-                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }`}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Mobile
+                        Admin Panel
                       </Link>
                       <Link 
                         href="/ceo" 
@@ -427,16 +390,16 @@ const Layout = ({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div className="col-span-1 md:col-span-2">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-8 h-8 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center shadow-sm p-1">
+                <Link href={getDashboardUrl()} className="flex items-center space-x-3 mb-4 group">
+                  <div className="w-8 h-8 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center shadow-sm p-1 group-hover:shadow-md transition-shadow">
                     <img 
                       src="/logo.webp" 
                       alt="Corporacity Logo" 
                       className="w-full h-full object-contain"
                     />
                   </div>
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">Corporacity</span>
-                </div>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Corporacity</span>
+                </Link>
                 <p className="text-gray-600 dark:text-gray-300 text-sm max-w-md">
                   The simplest way to keep your team in sync. Real-time status updates, 
                   seamless collaboration, and powerful insights for modern teams.

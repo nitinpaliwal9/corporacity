@@ -7,7 +7,7 @@ const Card = ({
   shadow = 'medium',
   ...props 
 }) => {
-  const baseClasses = 'bg-white rounded-lg border border-gray-200';
+  const baseClasses = 'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700';
   
   const paddingClasses = {
     none: '',
@@ -33,13 +33,13 @@ const Card = ({
 };
 
 const CardHeader = ({ children, className = '', ...props }) => (
-  <div className={`border-b border-gray-200 pb-4 mb-4 ${className}`} {...props}>
+  <div className={`border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 ${className}`} {...props}>
     {children}
   </div>
 );
 
 const CardTitle = ({ children, className = '', ...props }) => (
-  <h3 className={`text-lg font-semibold text-gray-900 ${className}`} {...props}>
+  <h3 className={`text-lg font-semibold text-gray-900 dark:text-white ${className}`} {...props}>
     {children}
   </h3>
 );
@@ -51,7 +51,7 @@ const CardContent = ({ children, className = '', ...props }) => (
 );
 
 const CardFooter = ({ children, className = '', ...props }) => (
-  <div className={`border-t border-gray-200 pt-4 mt-4 ${className}`} {...props}>
+  <div className={`border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 ${className}`} {...props}>
     {children}
   </div>
 );
