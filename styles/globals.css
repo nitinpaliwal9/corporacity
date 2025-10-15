@@ -237,6 +237,7 @@ html, body, #__next {
   height: 100%;
   background: #F8F9FC;
   color: #111827;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Dark mode styles */
@@ -248,6 +249,71 @@ html, body, #__next {
 .dark body, .dark #__next {
   background: #0F172A;
   color: #F1F5F9;
+}
+
+/* Improved contrast for better accessibility */
+.dark .text-gray-600 {
+  color: #D1D5DB !important; /* Better contrast than default gray-300 */
+}
+
+.dark .text-gray-500 {
+  color: #9CA3AF !important; /* Better contrast than default gray-400 */
+}
+
+.dark .text-gray-400 {
+  color: #6B7280 !important; /* Better contrast than default gray-500 */
+}
+
+/* WCAG AA compliance improvements */
+.dark .text-gray-300 {
+  color: #E5E7EB !important; /* Better contrast for dark mode */
+}
+
+/* Focus indicators for better accessibility */
+.focus-visible:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+.dark .focus-visible:focus {
+  outline-color: #60A5FA;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dark {
+    --tw-bg-opacity: 1;
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
+  }
+  
+  .dark .bg-slate-800 {
+    background-color: #1A1A1A !important;
+  }
+  
+  .dark .bg-slate-900 {
+    background-color: #000000 !important;
+  }
+  
+  .dark .text-gray-300 {
+    color: #FFFFFF !important;
+  }
+  
+  .dark .text-gray-400 {
+    color: #E0E0E0 !important;
+  }
+  
+  .dark .text-gray-500 {
+    color: #C0C0C0 !important;
+  }
+  
+  .dark .border-gray-700 {
+    border-color: #404040 !important;
+  }
+  
+  .dark .border-gray-600 {
+    border-color: #606060 !important;
+  }
 }
 
 /* Fix for text clipping issues with gradient text */
@@ -349,13 +415,25 @@ html {
   background: #f1f5f9;
 }
 
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #3b82f6, #8b5cf6);
   border-radius: 4px;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #60a5fa, #a78bfa);
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #2563eb, #7c3aed);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
 }
 
 .container {

@@ -10,10 +10,10 @@ const Alert = ({
   const baseClasses = 'p-4 rounded-md border';
   
   const variants = {
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
-    success: 'bg-green-50 border-green-200 text-green-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    error: 'bg-red-50 border-red-200 text-red-800'
+    info: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200',
+    success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200',
+    warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200',
+    error: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
   };
   
   const classes = `${baseClasses} ${variants[variant]} ${className}`;
@@ -51,7 +51,7 @@ const Alert = ({
             <div className="-mx-1.5 -my-1.5">
               <button
                 type="button"
-                className="inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                className="inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 text-current hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
                 onClick={onClose}
               >
                 <span className="sr-only">Dismiss</span>

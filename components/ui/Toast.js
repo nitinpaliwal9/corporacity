@@ -1,17 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Toast = ({ message, type = 'info', duration = 5000, onClose }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+  const [progress, setProgress] = useState(100);
+  const toastRef = useRef(null);
 
   useEffect(() => {
+    // Pause auto-dismiss when hovered
+    if (isHovered) return;
+
     const timer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(() => onClose(), 300); // Wait for animation to complete
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  }, [duration, onClose, isHovered]);
+
+  // Click outside to dismiss
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (toastRef.current && !toastRef.current.contains(event.target)) {
+        handleClose();
+      }
+    };
+
+    if (isVisible) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isVisible]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -21,14 +41,14 @@ const Toast = ({ message, type = 'info', duration = 5000, onClose }) => {
   const getToastStyles = () => {
     switch (type) {
       case 'success':
-        return 'bg-green-500 text-white border-green-600';
+        return 'bg-green-500 dark:bg-green-600 text-white border-green-600 dark:border-green-700';
       case 'error':
-        return 'bg-red-500 text-white border-red-600';
+        return 'bg-red-500 dark:bg-red-600 text-white border-red-600 dark:border-red-700';
       case 'warning':
-        return 'bg-yellow-500 text-white border-yellow-600';
+        return 'bg-yellow-500 dark:bg-yellow-600 text-white border-yellow-600 dark:border-yellow-700';
       case 'info':
       default:
-        return 'bg-blue-500 text-white border-blue-600';
+        return 'bg-blue-500 dark:bg-blue-600 text-white border-blue-600 dark:border-blue-700';
     }
   };
 
@@ -50,25 +70,54 @@ const Toast = ({ message, type = 'info', duration = 5000, onClose }) => {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ opacity: 0, y: -50, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -50, scale: 0.9 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className={`fixed top-4 right-4 z-50 max-w-sm w-full ${getToastStyles()} rounded-lg shadow-lg border p-4`}
+          ref={toastRef}
+          initial={{ opacity: 0, y: -50, scale: 0.9, x: 20 }}
+          animate={{ 
+            opacity: 1, 
+            y: 0, 
+            scale: 1, 
+            x: 0,
+            transition: { 
+              type: "spring", 
+              stiffness: 300, 
+              damping: 30,
+              duration: 0.4
+            }
+          }}
+          exit={{ 
+            opacity: 0, 
+            y: -20, 
+            scale: 0.95, 
+            x: 20,
+            transition: { 
+              duration: 0.2, 
+              ease: "easeIn" 
+            }
+          }}
+          whileHover={{ 
+            scale: 1.02, 
+            y: -2,
+            transition: { duration: 0.2 }
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={`fixed top-4 right-4 z-50 max-w-sm w-full ${getToastStyles()} rounded-xl shadow-xl border backdrop-blur-sm p-4 cursor-pointer transition-all duration-200 hover:shadow-2xl`}
         >
           <div className="flex items-start space-x-3">
             <span className="text-lg flex-shrink-0">{getIcon()}</span>
             <div className="flex-1">
-              <p className="text-sm font-medium">{message}</p>
+              <p className="text-sm font-medium text-white">{message}</p>
             </div>
-            <button
+            <motion.button
               onClick={handleClose}
-              className="flex-shrink-0 text-white/80 hover:text-white transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex-shrink-0 text-white/80 hover:text-white dark:text-white/90 dark:hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </button>
+            </motion.button>
           </div>
         </motion.div>
       )}

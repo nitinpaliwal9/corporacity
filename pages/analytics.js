@@ -177,9 +177,9 @@ export default function Analytics() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-slate-700/50 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -193,10 +193,10 @@ export default function Analytics() {
                 <p className="text-sm sm:text-base text-gray-600 mt-1">Strategic insights powered by artificial intelligence</p>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span>AI Active</span>
-                </div>
+              <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold">
+                <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></div>
+                <span>AI Active</span>
+              </div>
                 <Button 
                   onClick={() => {
                     // In a real app, this would generate and download a report
@@ -239,18 +239,18 @@ export default function Analytics() {
                         </span>
                       </div>
                       <div className={`text-sm font-semibold ${
-                        data.trend.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                        data.trend.startsWith('+') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}>
                         {data.trend}
                       </div>
                     </div>
-                    <div className="text-3xl font-bold text-gray-900 mb-1">
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
                       <AnimatedCounter value={data.current} />%
                     </div>
-                    <div className="text-sm text-gray-600 capitalize mb-3">
+                    <div className="text-sm text-gray-600 dark:text-gray-300 capitalize mb-3">
                       {key.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                       Predicted: {data.prediction}% next month
                     </div>
                   </Card>
@@ -261,8 +261,8 @@ export default function Analytics() {
             {/* AI Insights */}
             <motion.div variants={itemVariants}>
               <div className="mb-4 sm:mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">AI-Powered Insights</h2>
-                <p className="text-sm sm:text-base text-gray-600">Strategic recommendations based on team behavior analysis</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">AI-Powered Insights</h2>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Strategic recommendations based on team behavior analysis</p>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {insights.map((insight, index) => (
@@ -278,18 +278,18 @@ export default function Analytics() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-gray-900">{insight.title}</h3>
+                          <h3 className="font-semibold text-gray-900 dark:text-white">{insight.title}</h3>
                           <div className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            insight.impact === 'high' ? 'bg-red-100 text-red-800' :
-                            insight.impact === 'medium' ? 'bg-amber-100 text-amber-800' :
-                            'bg-green-100 text-green-800'
+                            insight.impact === 'high' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200' :
+                            insight.impact === 'medium' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200' :
+                            'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
                           }`}>
                             {insight.impact} impact
                           </div>
                         </div>
-                        <p className="text-gray-600 text-sm mb-3">{insight.description}</p>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">{insight.description}</p>
                         <div className="flex items-center justify-between">
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             Confidence: {insight.confidence}%
                           </div>
                           <Button 
@@ -313,33 +313,33 @@ export default function Analytics() {
             {/* Predictive Analytics */}
             <motion.div variants={itemVariants}>
               <div className="mb-4 sm:mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Predictive Analytics</h2>
-                <p className="text-sm sm:text-base text-gray-600">AI-powered forecasts for strategic planning</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Predictive Analytics</h2>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">AI-powered forecasts for strategic planning</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {predictions.map((prediction, index) => (
                   <Card key={prediction.id} className="p-4 sm:p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm">
                     <div className="text-center mb-4">
-                      <h3 className="font-semibold text-gray-900 mb-2">{prediction.metric}</h3>
-                      <div className="text-3xl font-bold text-gray-900 mb-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2">{prediction.metric}</h3>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
                         <AnimatedCounter value={prediction.current} />%
                       </div>
-                      <div className="text-sm text-gray-600">Current</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">Current</div>
                     </div>
                     <div className="text-center mb-4">
-                      <div className="text-2xl font-bold text-blue-600 mb-1">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                         <AnimatedCounter value={prediction.predicted} />%
                       </div>
-                      <div className="text-sm text-gray-600">Predicted</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">Predicted</div>
                     </div>
                     <div className="space-y-3">
-                      <div className="text-xs text-gray-500 text-center">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
                         {prediction.timeframe} • {prediction.confidence}% confidence
                       </div>
                       <div className="space-y-1">
                         {prediction.factors.map((factor, idx) => (
-                          <div key={idx} className="text-xs text-gray-600 flex items-center">
-                            <div className="w-1 h-1 bg-blue-500 rounded-full mr-2"></div>
+                          <div key={idx} className="text-xs text-gray-600 dark:text-gray-300 flex items-center">
+                            <div className="w-1 h-1 bg-blue-500 dark:bg-blue-400 rounded-full mr-2"></div>
                             {factor}
                           </div>
                         ))}

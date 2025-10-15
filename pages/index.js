@@ -211,7 +211,7 @@ export default function Home() {
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700"
+                  className="mb-8 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-200"
                 >
                   {message}
                 </motion.div>
@@ -229,7 +229,7 @@ export default function Home() {
                   <div className="text-4xl sm:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2 sm:mb-3">
                     <AnimatedCounter value={stats.companies} />
                   </div>
-                  <div className="text-gray-800 dark:text-white font-semibold text-base sm:text-lg mb-1 sm:mb-2">AI-Powered Companies</div>
+                  <div className="text-gray-900 dark:text-white font-semibold text-base sm:text-lg mb-1 sm:mb-2">AI-Powered Companies</div>
                   <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Generating strategic insights</div>
                 </div>
                 <div className="text-center p-6 sm:p-8 bg-white/80 dark:bg-slate-800/80 rounded-2xl sm:rounded-3xl border border-white/40 dark:border-slate-700/40 shadow-lg">
@@ -239,7 +239,7 @@ export default function Home() {
                   <div className="text-4xl sm:text-5xl font-bold text-emerald-600 dark:text-emerald-400 mb-2 sm:mb-3">
                     <AnimatedCounter value={stats.users} />
                   </div>
-                  <div className="text-gray-800 dark:text-white font-semibold text-base sm:text-lg mb-1 sm:mb-2">Optimized Team Members</div>
+                  <div className="text-gray-900 dark:text-white font-semibold text-base sm:text-lg mb-1 sm:mb-2">Optimized Team Members</div>
                   <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Peak performance achieved</div>
                 </div>
                 <div className="text-center p-6 sm:p-8 bg-white/80 dark:bg-slate-800/80 rounded-2xl sm:rounded-3xl border border-white/40 dark:border-slate-700/40 shadow-lg">
@@ -249,7 +249,7 @@ export default function Home() {
                   <div className="text-4xl sm:text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2 sm:mb-3">
                     <AnimatedCounter value={stats.statuses} />
                   </div>
-                  <div className="text-gray-800 dark:text-white font-semibold text-base sm:text-lg mb-1 sm:mb-2">Data Points Analyzed</div>
+                  <div className="text-gray-900 dark:text-white font-semibold text-base sm:text-lg mb-1 sm:mb-2">Data Points Analyzed</div>
                   <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Predictive patterns identified</div>
                 </div>
               </motion.div>

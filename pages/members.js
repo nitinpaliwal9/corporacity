@@ -336,7 +336,7 @@ export default function MembersDirectory() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -347,10 +347,10 @@ export default function MembersDirectory() {
           <motion.div variants={itemVariants} className="mb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                   Team Members
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   {company?.name} • {members.length} member{members.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -377,7 +377,7 @@ export default function MembersDirectory() {
               <Card.Content>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Search Members
                     </label>
                     <Input
@@ -388,13 +388,13 @@ export default function MembersDirectory() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Filter by Role
                     </label>
                     <select
                       value={filterRole}
                       onChange={(e) => setFilterRole(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     >
                       <option value="all">All Roles</option>
                       <option value="owner">CEO/Owner</option>
@@ -403,13 +403,13 @@ export default function MembersDirectory() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Filter by Status
                     </label>
                     <select
                       value={filterStatus}
                       onChange={(e) => setFilterStatus(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     >
                       <option value="all">All Status</option>
                       <option value="present">Present</option>
@@ -457,9 +457,9 @@ export default function MembersDirectory() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-2">
                             <h3 
-                              className={`text-lg font-semibold text-gray-900 truncate ${
+                              className={`text-lg font-semibold text-gray-900 dark:text-white truncate ${
                                 (user?.id === company?.owner_id || user?.role === 'manager') 
-                                  ? 'cursor-pointer hover:text-blue-600 transition-colors' 
+                                  ? 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors' 
                                   : ''
                               }`}
                               onDoubleClick={() => handleMemberDoubleClick(member)}
@@ -474,16 +474,16 @@ export default function MembersDirectory() {
                             {getRoleBadge(member.role)}
                           </div>
                           
-                          <p className="text-sm text-gray-500 mb-1 truncate">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 truncate">
                             {getDesignationName(member)}
                           </p>
                           
-                          <p className="text-sm text-gray-600 mb-2 truncate">
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 truncate">
                             {member.corp_profiles.email}
                           </p>
                           
                           {member.corp_profiles.phone && (
-                            <p className="text-sm text-gray-500 mb-3">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                               📞 {member.corp_profiles.phone}
                             </p>
                           )}
@@ -492,7 +492,7 @@ export default function MembersDirectory() {
                             <div>
                               {getStatusBadge(member.currentStatus)}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
                               {member.lastStatusTime ? (
                                 new Date(member.lastStatusTime).toLocaleTimeString()
                               ) : (
@@ -501,8 +501,8 @@ export default function MembersDirectory() {
                             </div>
                           </div>
                           
-                          <div className="mt-3 pt-3 border-t border-gray-100">
-                            <p className="text-xs text-gray-500">
+                          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                               Joined: {new Date(member.created_at).toLocaleDateString()}
                             </p>
                           </div>
@@ -521,10 +521,10 @@ export default function MembersDirectory() {
               <Card>
                 <Card.Content>
                   <div className="text-6xl mb-4">👥</div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                     No members found
                   </h3>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
                     {searchTerm || filterRole !== 'all' || filterStatus !== 'all'
                       ? 'Try adjusting your search or filters'
                       : 'No members have been added to this company yet'
@@ -562,34 +562,34 @@ export default function MembersDirectory() {
             >
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Employee
                   </label>
-                  <p className="text-lg font-semibold text-gray-900">
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
                     {editingMember?.corp_profiles?.full_name || 'No Name'}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     {editingMember?.corp_profiles?.email}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Current Designation
                   </label>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     {editingMember ? getDesignationName(editingMember) : 'No Designation'}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Select New Designation
                   </label>
                   <select
                     value={selectedDesignation}
                     onChange={(e) => setSelectedDesignation(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">No Designation</option>
                     {designations.map((designation) => (

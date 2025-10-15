@@ -556,15 +556,15 @@ export default function CeoDashboard() {
                   </h3>
                   <div className="space-y-1">
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      <span className="font-medium">Company ID:</span> {company.code}
+                      <span className="font-medium text-gray-900 dark:text-white">Company ID:</span> {company.code}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      <span className="font-medium">Owner:</span> {user?.email}
+                      <span className="font-medium text-gray-900 dark:text-white">Owner:</span> {user?.email}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
+                  <div className="w-4 h-4 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Active</p>
                 </div>
               </div>
@@ -618,7 +618,7 @@ export default function CeoDashboard() {
                     <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                       <span className="text-white text-2xl">✅</span>
                     </div>
-                    <div className="text-3xl font-bold text-green-600 mb-1">
+                    <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
                       <AnimatedCounter value={stats.present} />
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-300">Present</div>
@@ -628,7 +628,7 @@ export default function CeoDashboard() {
                     <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                       <span className="text-white text-2xl">🕗</span>
                     </div>
-                    <div className="text-3xl font-bold text-yellow-600 mb-1">
+                    <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">
                       <AnimatedCounter value={stats.late} />
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-300">Late</div>
@@ -638,7 +638,7 @@ export default function CeoDashboard() {
                     <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                       <span className="text-white text-2xl">🌴</span>
                     </div>
-                    <div className="text-3xl font-bold text-red-600 mb-1">
+                    <div className="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">
                       <AnimatedCounter value={stats.leave} />
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-300">On Leave</div>
@@ -648,7 +648,7 @@ export default function CeoDashboard() {
                     <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                       <span className="text-white text-2xl">🧭</span>
                     </div>
-                    <div className="text-3xl font-bold text-blue-600 mb-1">
+                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                       <AnimatedCounter value={stats.visit} />
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-300">On Visit</div>
@@ -689,7 +689,7 @@ export default function CeoDashboard() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
@@ -762,7 +762,7 @@ export default function CeoDashboard() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
                         <span className="text-white font-bold text-sm">
@@ -779,7 +779,7 @@ export default function CeoDashboard() {
                             {new Date(item.timestamp).toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300 mt-1">
+                        <p className="text-gray-600 dark:text-gray-300 mt-1">
                           Status: <span className="font-medium capitalize">{item.type}</span>
                           {item.message && <span> - {item.message}</span>}
                         </p>
