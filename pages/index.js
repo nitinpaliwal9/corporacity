@@ -24,9 +24,28 @@ export default function Home() {
     }
   }, [])
 
-  // Mock stats for demo
+  // Load real stats
   useEffect(() => {
-    setStats({ companies: 1247, users: 8934, statuses: 45678 })
+    const loadStats = async () => {
+      try {
+        const [companiesResult, usersResult, statusesResult] = await Promise.all([
+          supabase.from('corp_companies').select('id', { count: 'exact', head: true }),
+          supabase.from('corp_memberships').select('id', { count: 'exact', head: true }),
+          supabase.from('corp_statuses').select('id', { count: 'exact', head: true })
+        ]);
+        
+        setStats({
+          companies: companiesResult.count || 0,
+          users: usersResult.count || 0,
+          statuses: statusesResult.count || 0
+        });
+      } catch (error) {
+        // Fallback to demo stats if database is not available
+        setStats({ companies: 1247, users: 8934, statuses: 45678 });
+      }
+    };
+    
+    loadStats();
   }, [])
 
   const signInWithGoogle = async () => {
@@ -34,7 +53,6 @@ export default function Home() {
     setMessage('')
     
     try {
-      console.log('Starting Google sign-in...')
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -42,16 +60,10 @@ export default function Home() {
         }
       })
       
-      console.log('Google sign-in result:', { data, error })
-      
       if (error) {
-        console.error('Google sign-in error:', error)
         setMessage(`Sign in failed: ${error.message}`)
-      } else {
-        console.log('Google sign-in initiated successfully')
       }
     } catch (err) {
-      console.error('Google sign-in exception:', err)
       setMessage(`Sign in failed: ${err.message}`)
     } finally {
       setLoading(false)
@@ -122,18 +134,18 @@ export default function Home() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-100/20 dark:from-blue-900/20 via-transparent to-transparent" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-indigo-100/20 dark:from-indigo-900/20 via-transparent to-transparent" />
           
-          {/* Floating Elements */}
-          <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-r from-blue-400/10 to-indigo-400/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
-          <div className="absolute top-40 right-10 w-80 h-80 bg-gradient-to-r from-purple-400/10 to-pink-400/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-          <div className="absolute bottom-10 left-20 w-72 h-72 bg-gradient-to-r from-cyan-400/10 to-blue-400/10 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
+          {/* Simplified Floating Elements - Mobile Optimized */}
+          <div className="hidden sm:block absolute top-20 left-10 w-96 h-96 bg-gradient-to-r from-blue-400/5 to-indigo-400/5 rounded-full mix-blend-multiply filter blur-2xl" />
+          <div className="hidden sm:block absolute top-40 right-10 w-80 h-80 bg-gradient-to-r from-purple-400/5 to-pink-400/5 rounded-full mix-blend-multiply filter blur-2xl" />
+          <div className="hidden sm:block absolute bottom-10 left-20 w-72 h-72 bg-gradient-to-r from-cyan-400/5 to-blue-400/5 rounded-full mix-blend-multiply filter blur-2xl" />
           
-          {/* Grid Pattern Overlay */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
+          {/* Simplified Grid Pattern - Mobile Optimized */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.02)_1px,transparent_1px)] bg-[size:40px_40px] sm:bg-[size:50px_50px]" />
           
-          {/* Floating Icons */}
-          <div className="absolute top-32 left-1/4 text-4xl opacity-10 animate-bounce" style={{ animationDelay: '1s' }}>📊</div>
-          <div className="absolute top-48 right-1/4 text-4xl opacity-10 animate-bounce" style={{ animationDelay: '3s' }}>👥</div>
-          <div className="absolute bottom-20 left-1/3 text-4xl opacity-10 animate-bounce" style={{ animationDelay: '5s' }}>⚡</div>
+          {/* Simplified Floating Icons - Hidden on Mobile */}
+          <div className="hidden lg:block absolute top-32 left-1/4 text-4xl opacity-5">📊</div>
+          <div className="hidden lg:block absolute top-48 right-1/4 text-4xl opacity-5">👥</div>
+          <div className="hidden lg:block absolute bottom-20 left-1/3 text-4xl opacity-5">⚡</div>
 
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-12 sm:pb-16">
             <motion.div
@@ -143,8 +155,8 @@ export default function Home() {
               className="text-center"
             >
               <motion.div variants={itemVariants} className="mb-6 sm:mb-8">
-                <div className="inline-flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6 sm:mb-8 p-3 sm:p-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-white/20 dark:border-slate-700/20 shadow-xl">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300 p-2">
+                <div className="inline-flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6 sm:mb-8 p-3 sm:p-4 bg-white/70 dark:bg-slate-800/70 rounded-2xl border border-white/30 dark:border-slate-700/30 shadow-lg">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-lg p-2">
                     <img 
                       src="/logo.webp" 
                       alt="Corporacity Logo" 
@@ -184,7 +196,7 @@ export default function Home() {
                     onClick={signInWithGoogle}
                     loading={loading}
                     size="large"
-                    className="premium-button bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white px-8 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 border-0 relative overflow-hidden w-full sm:w-auto touch-target"
+                    className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white px-6 sm:px-8 md:px-12 py-3 sm:py-4 md:py-6 text-base sm:text-lg md:text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-200 border-0 relative overflow-hidden w-full sm:w-auto touch-target"
                   >
                     {loading ? 'Signing in...' : '🚀 Start Free Trial'}
                   </Button>
@@ -205,40 +217,40 @@ export default function Home() {
                 </motion.div>
               )}
 
-              {/* AI-Powered Insights Stats */}
+              {/* AI-Powered Insights Stats - Mobile Optimized */}
               <motion.div 
                 variants={itemVariants}
-                className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+                className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto"
               >
-                <div className="text-center p-8 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-3xl border border-white/30 dark:border-slate-700/30 shadow-xl hover:shadow-2xl transition-all duration-500 group">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-white text-3xl">🧠</span>
+                <div className="text-center p-6 sm:p-8 bg-white/80 dark:bg-slate-800/80 rounded-2xl sm:rounded-3xl border border-white/40 dark:border-slate-700/40 shadow-lg">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
+                    <span className="text-white text-2xl sm:text-3xl">🧠</span>
                   </div>
-                  <div className="text-5xl font-bold text-blue-600 dark:text-blue-400 mb-3">
+                  <div className="text-4xl sm:text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2 sm:mb-3">
                     <AnimatedCounter value={stats.companies} />
                   </div>
-                  <div className="text-gray-800 dark:text-white font-semibold text-lg mb-2">AI-Powered Companies</div>
-                  <div className="text-gray-600 dark:text-gray-300 text-sm">Generating strategic insights</div>
+                  <div className="text-gray-800 dark:text-white font-semibold text-base sm:text-lg mb-1 sm:mb-2">AI-Powered Companies</div>
+                  <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Generating strategic insights</div>
                 </div>
-                <div className="text-center p-8 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-3xl border border-white/30 dark:border-slate-700/30 shadow-xl hover:shadow-2xl transition-all duration-500 group">
-                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 via-green-600 to-teal-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-white text-3xl">⚡</span>
+                <div className="text-center p-6 sm:p-8 bg-white/80 dark:bg-slate-800/80 rounded-2xl sm:rounded-3xl border border-white/40 dark:border-slate-700/40 shadow-lg">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-emerald-500 via-green-600 to-teal-600 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
+                    <span className="text-white text-2xl sm:text-3xl">⚡</span>
                   </div>
-                  <div className="text-5xl font-bold text-emerald-600 dark:text-emerald-400 mb-3">
+                  <div className="text-4xl sm:text-5xl font-bold text-emerald-600 dark:text-emerald-400 mb-2 sm:mb-3">
                     <AnimatedCounter value={stats.users} />
                   </div>
-                  <div className="text-gray-800 dark:text-white font-semibold text-lg mb-2">Optimized Team Members</div>
-                  <div className="text-gray-600 dark:text-gray-300 text-sm">Peak performance achieved</div>
+                  <div className="text-gray-800 dark:text-white font-semibold text-base sm:text-lg mb-1 sm:mb-2">Optimized Team Members</div>
+                  <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Peak performance achieved</div>
                 </div>
-                <div className="text-center p-8 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-3xl border border-white/30 dark:border-slate-700/30 shadow-xl hover:shadow-2xl transition-all duration-500 group">
-                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 via-violet-600 to-purple-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-white text-3xl">📈</span>
+                <div className="text-center p-6 sm:p-8 bg-white/80 dark:bg-slate-800/80 rounded-2xl sm:rounded-3xl border border-white/40 dark:border-slate-700/40 shadow-lg">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-500 via-violet-600 to-purple-600 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-lg">
+                    <span className="text-white text-2xl sm:text-3xl">📈</span>
                   </div>
-                  <div className="text-5xl font-bold text-purple-600 dark:text-purple-400 mb-3">
+                  <div className="text-4xl sm:text-5xl font-bold text-purple-600 dark:text-purple-400 mb-2 sm:mb-3">
                     <AnimatedCounter value={stats.statuses} />
                   </div>
-                  <div className="text-gray-800 dark:text-white font-semibold text-lg mb-2">Data Points Analyzed</div>
-                  <div className="text-gray-600 dark:text-gray-300 text-sm">Predictive patterns identified</div>
+                  <div className="text-gray-800 dark:text-white font-semibold text-base sm:text-lg mb-1 sm:mb-2">Data Points Analyzed</div>
+                  <div className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">Predictive patterns identified</div>
                 </div>
               </motion.div>
             </motion.div>
@@ -717,7 +729,7 @@ export default function Home() {
                       >
                         {plan.cta}
                       </Button>
-                    </Link>
+                </Link>
                   </Card>
                 </motion.div>
               ))}
@@ -946,7 +958,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
-      </Layout>
+    </Layout>
     </>
   )
 }

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import ThemeToggle from './ThemeToggle';
 import NotificationCenter from './NotificationCenter';
+import MobileAppInstall from './MobileAppInstall';
 import supabase from '../../lib/supabaseClient';
 
 const Layout = ({ 
@@ -44,7 +45,7 @@ const Layout = ({
       {showHeader && (
         <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-slate-700/50 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
+            <div className="flex justify-between items-center h-14 sm:h-16">
               <div className="flex items-center space-x-4">
                 <Link 
                   href="/" 
@@ -56,7 +57,7 @@ const Layout = ({
                     }
                   }}
                 >
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 p-1">
+                  <div className="w-7 h-7 sm:w-10 sm:h-10 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 p-1">
                     <img 
                       src="/logo.webp" 
                       alt="Corporacity Logo" 
@@ -68,6 +69,11 @@ const Layout = ({
                       Corporacity
                     </h1>
                     <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Team Status Management</p>
+                  </div>
+                  <div className="sm:hidden">
+                    <h1 className="text-sm font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                      Corporacity
+                    </h1>
                   </div>
                 </Link>
               </div>
@@ -232,7 +238,7 @@ const Layout = ({
                 {/* Mobile menu button */}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+                  className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 touch-target min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {mobileMenuOpen ? (
@@ -248,13 +254,13 @@ const Layout = ({
             {/* Mobile menu */}
             {mobileMenuOpen && (
               <div className="md:hidden bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700">
-                <div className="px-4 py-4 space-y-4">
+                <div className="px-4 py-4 space-y-2">
                   {router.pathname === '/' ? (
                     // Homepage mobile navigation
                     <>
                       <a 
                         href="#features" 
-                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-2"
+                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors touch-target min-h-[44px] flex items-center"
                         onClick={(e) => {
                           e.preventDefault()
                           setMobileMenuOpen(false)
@@ -268,7 +274,7 @@ const Layout = ({
                       </a>
                       <a 
                         href="#pricing" 
-                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-2"
+                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors touch-target min-h-[44px] flex items-center"
                         onClick={(e) => {
                           e.preventDefault()
                           setMobileMenuOpen(false)
@@ -282,7 +288,7 @@ const Layout = ({
                       </a>
                       <a 
                         href="#faq" 
-                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-2"
+                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors touch-target min-h-[44px] flex items-center"
                         onClick={(e) => {
                           e.preventDefault()
                           setMobileMenuOpen(false)
@@ -296,7 +302,7 @@ const Layout = ({
                       </a>
                       <Link 
                         href="/employee" 
-                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-2"
+                        className="block text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors touch-target min-h-[44px] flex items-center"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Demo
@@ -307,10 +313,10 @@ const Layout = ({
                     <>
                       <Link 
                         href="/employee" 
-                        className={`block py-2 transition-colors duration-200 ${
+                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
                           router.pathname === '/employee' 
-                            ? 'text-blue-600 dark:text-blue-400' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
@@ -318,10 +324,10 @@ const Layout = ({
                       </Link>
                       <Link 
                         href="/analytics" 
-                        className={`block py-2 transition-colors duration-200 ${
+                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
                           router.pathname === '/analytics' 
-                            ? 'text-blue-600 dark:text-blue-400' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
@@ -329,10 +335,10 @@ const Layout = ({
                       </Link>
                       <Link 
                         href="/schedule" 
-                        className={`block py-2 transition-colors duration-200 ${
+                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
                           router.pathname === '/schedule' 
-                            ? 'text-blue-600 dark:text-blue-400' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
@@ -340,10 +346,10 @@ const Layout = ({
                       </Link>
                       <Link 
                         href="/team-health" 
-                        className={`block py-2 transition-colors duration-200 ${
+                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
                           router.pathname === '/team-health' 
-                            ? 'text-blue-600 dark:text-blue-400' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
@@ -351,10 +357,10 @@ const Layout = ({
                       </Link>
                       <Link 
                         href="/integrations" 
-                        className={`block py-2 transition-colors duration-200 ${
+                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
                           router.pathname === '/integrations' 
-                            ? 'text-blue-600 dark:text-blue-400' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
@@ -362,10 +368,10 @@ const Layout = ({
                       </Link>
                       <Link 
                         href="/security" 
-                        className={`block py-2 transition-colors duration-200 ${
+                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
                           router.pathname === '/security' 
-                            ? 'text-blue-600 dark:text-blue-400' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
@@ -373,10 +379,10 @@ const Layout = ({
                       </Link>
                       <Link 
                         href="/mobile" 
-                        className={`block py-2 transition-colors duration-200 ${
+                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
                           router.pathname === '/mobile' 
-                            ? 'text-blue-600 dark:text-blue-400' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
@@ -384,10 +390,10 @@ const Layout = ({
                       </Link>
                       <Link 
                         href="/ceo" 
-                        className={`block py-2 transition-colors duration-200 ${
+                        className={`block py-3 px-2 rounded-lg transition-colors duration-200 touch-target min-h-[44px] flex items-center ${
                           router.pathname === '/ceo' 
-                            ? 'text-blue-600 dark:text-blue-400' 
-                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' 
+                            : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
@@ -399,7 +405,7 @@ const Layout = ({
                   {router.pathname === '/' && !user && (
                     <Link 
                       href="/create-company"
-                      className="block bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 text-center mt-4"
+                      className="block bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors duration-200 text-center mt-4 touch-target min-h-[44px] flex items-center justify-center"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Get Started
@@ -469,6 +475,9 @@ const Layout = ({
           </div>
         </footer>
       )}
+      
+      {/* Mobile App Install Prompt */}
+      <MobileAppInstall />
     </div>
   );
 };

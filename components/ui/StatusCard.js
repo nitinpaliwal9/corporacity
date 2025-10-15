@@ -66,26 +66,27 @@ const StatusCard = ({
       onClick={onClick}
       disabled={disabled || loading}
       className={`
-        relative group w-full p-6 rounded-2xl border-2 transition-all duration-300
+        relative group w-full p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 transition-all duration-300
         ${config.bgColor} ${config.borderColor}
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:shadow-lg'}
         ${isActive ? 'ring-4 ring-blue-200 ring-opacity-50' : ''}
         ${loading ? 'animate-pulse' : ''}
+        min-h-[120px] sm:min-h-[140px] touch-target
       `}
     >
       {/* Background gradient overlay */}
       <div className={`
-        absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300
+        absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300
         ${config.color}
         ${disabled ? '' : config.hoverColor}
       `} />
       
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center space-y-3">
+      <div className="relative z-10 flex flex-col items-center space-y-2 sm:space-y-3">
         {/* Icon */}
-        <div className="text-4xl transform group-hover:scale-110 transition-transform duration-300">
+        <div className="text-3xl sm:text-4xl transform group-hover:scale-110 transition-transform duration-300">
           {loading ? (
-            <div className="w-10 h-10 bg-gray-300 rounded-full animate-pulse" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-300 rounded-full animate-pulse" />
           ) : (
             config.icon
           )}
@@ -93,11 +94,11 @@ const StatusCard = ({
         
         {/* Label */}
         <div className="text-center">
-          <h3 className={`font-semibold text-lg ${config.textColor}`}>
+          <h3 className={`font-semibold text-sm sm:text-lg ${config.textColor}`}>
             {config.label}
           </h3>
           {count !== null && (
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">
               {count} {count === 1 ? 'person' : 'people'}
             </p>
           )}
@@ -123,7 +124,7 @@ const StatusCard = ({
       </div>
       
       {/* Hover effect */}
-      <div className="absolute inset-0 rounded-2xl bg-white opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+      <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
     </motion.button>
   );
 };

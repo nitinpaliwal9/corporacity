@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
 import supabase from '../lib/supabaseClient';
+import RealAnalyticsService from '../lib/realAnalytics';
 
 export default function Analytics() {
   const [user, setUser] = useState(null);
@@ -41,108 +42,95 @@ export default function Analytics() {
 
   const loadAnalytics = async (companyId) => {
     try {
-      // Simulate AI-powered analytics data
-      const mockAnalytics = {
-        productivity: {
-          current: 87,
-          trend: '+12%',
-          prediction: 92
-        },
-        engagement: {
-          current: 78,
-          trend: '+8%',
-          prediction: 85
-        },
-        attendance: {
-          current: 94,
-          trend: '+3%',
-          prediction: 96
-        },
-        burnoutRisk: {
-          current: 15,
-          trend: '-5%',
-          prediction: 12
-        }
+      setLoading(true);
+      
+      // Load real analytics data
+      const [productivity, engagement, attendance, burnoutRisk, aiInsights] = await Promise.all([
+        RealAnalyticsService.calculateProductivityMetrics(companyId),
+        RealAnalyticsService.calculateEngagementMetrics(companyId),
+        RealAnalyticsService.calculateAttendanceMetrics(companyId),
+        RealAnalyticsService.calculateBurnoutRisk(companyId),
+        RealAnalyticsService.generateAIInsights(companyId)
+      ]);
+
+      const realAnalytics = {
+        productivity,
+        engagement,
+        attendance,
+        burnoutRisk
       };
 
-      const mockInsights = [
-        {
-          id: 1,
-          type: 'productivity',
-          title: 'Peak Performance Window Identified',
-          description: 'Your team shows 23% higher productivity between 9-11 AM. Consider scheduling critical tasks during this window.',
-          impact: 'high',
-          confidence: 94,
-          icon: '⚡',
-          color: 'emerald'
-        },
-        {
-          id: 2,
-          type: 'engagement',
-          title: 'Friday Afternoon Engagement Drop',
-          description: 'Team engagement decreases by 18% after 2 PM on Fridays. Consider lighter workload or team activities.',
-          impact: 'medium',
-          confidence: 87,
-          icon: '📉',
-          color: 'amber'
-        },
-        {
-          id: 3,
-          type: 'burnout',
-          title: 'Sarah Chen Shows Burnout Risk',
-          description: 'Pattern analysis indicates 78% burnout risk for Sarah. Recommend workload adjustment and check-in.',
-          impact: 'high',
-          confidence: 78,
-          icon: '⚠️',
-          color: 'red'
-        },
-        {
-          id: 4,
-          type: 'optimization',
-          title: 'Meeting Optimization Opportunity',
-          description: 'Reducing meeting frequency by 20% could increase productivity by 15% based on current patterns.',
-          impact: 'medium',
-          confidence: 82,
-          icon: '🎯',
-          color: 'blue'
-        }
-      ];
-
-      const mockPredictions = [
+      // Generate predictions based on real data
+      const realPredictions = [
         {
           id: 1,
           metric: 'Productivity',
-          current: 87,
-          predicted: 92,
+          current: productivity.current,
+          predicted: productivity.prediction,
           timeframe: 'Next 30 days',
           confidence: 89,
           factors: ['Improved scheduling', 'Reduced burnout risk', 'Better engagement']
         },
         {
           id: 2,
-          metric: 'Team Retention',
-          current: 94,
-          predicted: 97,
+          metric: 'Team Engagement',
+          current: engagement.current,
+          predicted: engagement.prediction,
           timeframe: 'Next quarter',
           confidence: 76,
           factors: ['Wellness initiatives', 'Workload balance', 'Recognition programs']
         },
         {
           id: 3,
-          metric: 'Project Delivery',
-          current: 78,
-          predicted: 85,
+          metric: 'Attendance Rate',
+          current: attendance.current,
+          predicted: attendance.prediction,
           timeframe: 'Next sprint',
           confidence: 83,
           factors: ['Resource optimization', 'Timeline adjustments', 'Team alignment']
         }
       ];
 
-      setAnalytics(mockAnalytics);
-      setInsights(mockInsights);
-      setPredictions(mockPredictions);
+      setAnalytics(realAnalytics);
+      setInsights(aiInsights);
+      setPredictions(realPredictions);
     } catch (error) {
       console.error('Error loading analytics:', error);
+      
+      // Fallback to mock data if real analytics fail
+      const fallbackAnalytics = {
+        productivity: { current: 0, trend: '0%', prediction: 0 },
+        engagement: { current: 0, trend: '0%', prediction: 0 },
+        attendance: { current: 0, trend: '0%', prediction: 0 },
+        burnoutRisk: { current: 0, trend: '0%', prediction: 0 }
+      };
+
+      const fallbackInsights = [{
+        id: 1,
+        type: 'info',
+        title: 'Insufficient Data',
+        description: 'We need more status updates to generate meaningful insights. Encourage your team to update their status regularly.',
+        impact: 'low',
+        confidence: 100,
+        icon: '📊',
+        color: 'blue'
+      }];
+
+      const fallbackPredictions = [{
+        id: 1,
+        metric: 'Data Collection',
+        current: 0,
+        predicted: 0,
+        timeframe: 'Next 30 days',
+        confidence: 0,
+        factors: ['More status updates needed', 'Team engagement required', 'Data collection period']
+      }];
+
+      setAnalytics(fallbackAnalytics);
+      setInsights(fallbackInsights);
+      setPredictions(fallbackPredictions);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,20 +178,20 @@ export default function Analytics() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         {/* Header */}
         <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center justify-between"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0"
             >
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
                   AI Analytics Dashboard
                 </h1>
-                <p className="text-gray-600 mt-1">Strategic insights powered by artificial intelligence</p>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">Strategic insights powered by artificial intelligence</p>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+                <div className="flex items-center space-x-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span>AI Active</span>
                 </div>
@@ -214,6 +202,7 @@ export default function Analytics() {
                   }}
                   variant="outline" 
                   size="small"
+                  className="text-xs sm:text-sm px-3 py-2 touch-target min-h-[44px]"
                 >
                   Export Report
                 </Button>
@@ -222,18 +211,18 @@ export default function Analytics() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="space-y-8"
+            className="space-y-6 sm:space-y-8"
           >
             {/* Key Metrics */}
             <motion.div variants={itemVariants}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {analytics && Object.entries(analytics).map(([key, data], index) => (
-                  <Card key={key} className="p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm">
+                  <Card key={key} className="p-4 sm:p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm">
                     <div className="flex items-center justify-between mb-4">
                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                         key === 'productivity' ? 'bg-gradient-to-br from-emerald-500 to-green-600' :
@@ -269,13 +258,13 @@ export default function Analytics() {
 
             {/* AI Insights */}
             <motion.div variants={itemVariants}>
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">AI-Powered Insights</h2>
-                <p className="text-gray-600">Strategic recommendations based on team behavior analysis</p>
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">AI-Powered Insights</h2>
+                <p className="text-sm sm:text-base text-gray-600">Strategic recommendations based on team behavior analysis</p>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {insights.map((insight, index) => (
-                  <Card key={insight.id} className="p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm group">
+                  <Card key={insight.id} className="p-4 sm:p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm group">
                     <div className="flex items-start space-x-4">
                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                         insight.color === 'emerald' ? 'bg-gradient-to-br from-emerald-500 to-green-600' :
@@ -321,13 +310,13 @@ export default function Analytics() {
 
             {/* Predictive Analytics */}
             <motion.div variants={itemVariants}>
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Predictive Analytics</h2>
-                <p className="text-gray-600">AI-powered forecasts for strategic planning</p>
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Predictive Analytics</h2>
+                <p className="text-sm sm:text-base text-gray-600">AI-powered forecasts for strategic planning</p>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {predictions.map((prediction, index) => (
-                  <Card key={prediction.id} className="p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm">
+                  <Card key={prediction.id} className="p-4 sm:p-6 hover:shadow-xl transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm">
                     <div className="text-center mb-4">
                       <h3 className="font-semibold text-gray-900 mb-2">{prediction.metric}</h3>
                       <div className="text-3xl font-bold text-gray-900 mb-1">

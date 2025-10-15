@@ -1,7 +1,7 @@
 {
-  "name": "Corporacity - Team Status Management",
+  "name": "Corporacity - AI-Powered Team Management",
   "short_name": "Corporacity",
-  "description": "Professional team status management and attendance tracking",
+  "description": "Transform team data into strategic intelligence with AI-powered analytics and smart scheduling",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

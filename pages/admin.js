@@ -11,6 +11,10 @@ import Input from '../components/ui/Input'
 import Alert from '../components/ui/Alert'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import Badge from '../components/ui/Badge'
+import Announcements from '../components/ui/Announcements'
+import DesignationManager from '../components/ui/DesignationManager'
+import RealTimeChat from '../components/ui/RealTimeChat'
+import SecurityDashboard from '../components/ui/SecurityDashboard'
 
 export default function AdminPanel() {
   const [auditLogs, setAuditLogs] = useState([])
@@ -276,8 +280,11 @@ export default function AdminPanel() {
               <nav className="-mb-px flex space-x-8">
                 {[
                   { id: 'overview', label: 'Overview', icon: '📊' },
-                  { id: 'audit', label: 'Audit Logs', icon: '📋' },
+                  { id: 'announcements', label: 'Announcements', icon: '📢' },
+                  { id: 'designations', label: 'Designations', icon: '👔' },
+                  { id: 'chat', label: 'Team Chat', icon: '💬' },
                   { id: 'security', label: 'Security', icon: '🔒' },
+                  { id: 'audit', label: 'Audit Logs', icon: '📋' },
                   { id: 'users', label: 'User Management', icon: '👥' }
                 ].map((tab) => (
                   <button
@@ -347,6 +354,47 @@ export default function AdminPanel() {
             </motion.div>
           )}
 
+          {/* Announcements Tab */}
+          {activeTab === 'announcements' && (
+            <motion.div variants={itemVariants}>
+              <Announcements 
+                companyId={company?.id} 
+                userId={user?.id} 
+                userRole="owner" 
+              />
+            </motion.div>
+          )}
+
+          {/* Designations Tab */}
+          {activeTab === 'designations' && (
+            <motion.div variants={itemVariants}>
+              <DesignationManager 
+                companyId={company?.id} 
+                userRole="owner" 
+              />
+            </motion.div>
+          )}
+
+          {/* Team Chat Tab */}
+          {activeTab === 'chat' && (
+            <motion.div variants={itemVariants}>
+              <Card>
+                <Card.Header>
+                  <Card.Title>Team Communication</Card.Title>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Real-time WhatsApp-like communication for your team
+                  </p>
+                </Card.Header>
+                <Card.Content>
+                  <RealTimeChat 
+                    companyId={company?.id} 
+                    userId={user?.id} 
+                  />
+                </Card.Content>
+              </Card>
+            </motion.div>
+          )}
+
           {/* Audit Logs Tab */}
           {activeTab === 'audit' && (
             <motion.div variants={itemVariants}>
@@ -403,97 +451,10 @@ export default function AdminPanel() {
           {/* Security Tab */}
           {activeTab === 'security' && (
             <motion.div variants={itemVariants}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <Card.Header>
-                    <Card.Title>Security Settings</Card.Title>
-                  </Card.Header>
-                  <Card.Content>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">Two-Factor Authentication</p>
-                          <p className="text-sm text-gray-600">Require 2FA for all users</p>
-                        </div>
-                        <Button 
-                          onClick={() => {
-                            // In a real app, this would open configuration settings
-                            alert('Configuration feature coming soon! This would open the database configuration panel.');
-                          }}
-                          variant="outline" 
-                          size="small"
-                        >
-                          Configure
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">Session Timeout</p>
-                          <p className="text-sm text-gray-600">Auto-logout after inactivity</p>
-                        </div>
-                        <Button 
-                          onClick={() => {
-                            // In a real app, this would open configuration settings
-                            alert('Configuration feature coming soon! This would open the database configuration panel.');
-                          }}
-                          variant="outline" 
-                          size="small"
-                        >
-                          Configure
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">IP Restrictions</p>
-                          <p className="text-sm text-gray-600">Limit access by IP address</p>
-                        </div>
-                        <Button 
-                          onClick={() => {
-                            // In a real app, this would open configuration settings
-                            alert('Configuration feature coming soon! This would open the database configuration panel.');
-                          }}
-                          variant="outline" 
-                          size="small"
-                        >
-                          Configure
-                        </Button>
-                      </div>
-                    </div>
-                  </Card.Content>
-                </Card>
-
-                <Card>
-                  <Card.Header>
-                    <Card.Title>Security Alerts</Card.Title>
-                  </Card.Header>
-                  <Card.Content>
-                    <div className="space-y-3">
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-red-600">🚨</span>
-                          <span className="text-sm font-medium text-red-800">
-                            Multiple failed login attempts detected
-                          </span>
-                        </div>
-                        <p className="text-xs text-red-600 mt-1">
-                          5 minutes ago
-                        </p>
-                      </div>
-                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-yellow-600">⚠️</span>
-                          <span className="text-sm font-medium text-yellow-800">
-                            Unusual login location detected
-                          </span>
-                        </div>
-                        <p className="text-xs text-yellow-600 mt-1">
-                          2 hours ago
-                        </p>
-                      </div>
-                    </div>
-                  </Card.Content>
-                </Card>
-              </div>
+              <SecurityDashboard 
+                companyId={company?.id} 
+                userRole="owner" 
+              />
             </motion.div>
           )}
 

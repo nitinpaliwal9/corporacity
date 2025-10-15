@@ -14,6 +14,8 @@ import Alert from '../components/ui/Alert'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import ProgressBar from '../components/ui/ProgressBar'
 import AnimatedCounter from '../components/ui/AnimatedCounter'
+import Announcements from '../components/ui/Announcements'
+import RealTimeChat from '../components/ui/RealTimeChat'
 
 const STATUS_TYPES = [
   { key: 'present', label: 'Present ✅' },
@@ -307,22 +309,25 @@ export default function EmployeeStatus() {
 
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
+          className="mb-8"
         >
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Employee Dashboard</h1>
-            <p className="text-gray-600 mt-1">Update your status and stay connected with your team</p>
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Employee Dashboard</h1>
+            <p className="text-sm sm:text-base text-gray-600">Update your status and stay connected with your team</p>
           </div>
-          <div className="flex space-x-3">
+          
+          {/* Mobile-optimized action buttons */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
             <Button
               onClick={() => router.push('/analytics')}
               variant="outline"
               size="small"
+              className="text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-2 min-h-[44px] touch-target"
             >
               📊 Analytics
             </Button>
@@ -330,6 +335,7 @@ export default function EmployeeStatus() {
               onClick={() => router.push('/members')}
               variant="outline"
               size="small"
+              className="text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-2 min-h-[44px] touch-target"
             >
               👥 Team Members
             </Button>
@@ -337,10 +343,16 @@ export default function EmployeeStatus() {
               onClick={() => router.push('/schedule')}
               variant="outline"
               size="small"
+              className="text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-2 min-h-[44px] touch-target"
             >
               📅 Schedule
             </Button>
-            <Button onClick={logout} variant="outline" size="small">
+            <Button 
+              onClick={logout} 
+              variant="outline" 
+              size="small"
+              className="text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-2 min-h-[44px] touch-target"
+            >
               Logout
             </Button>
           </div>
@@ -352,20 +364,20 @@ export default function EmployeeStatus() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="mb-8"
+            className="mb-6 sm:mb-8"
           >
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 p-4 sm:p-6">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-sm sm:text-lg">
                     {(profile.full_name || user?.email || 'U').charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                     {profile.full_name || user?.email}
                   </h3>
-                  <p className="text-sm text-gray-600">Team Member</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Team Member</p>
                 </div>
               </div>
             </Card>
@@ -377,42 +389,42 @@ export default function EmployeeStatus() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
           {membership ? (
-            <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 p-4 sm:p-6">
+              <div className="flex items-start justify-between">
+                <div className="min-w-0 flex-1 pr-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 truncate">
                     {company?.name || 'Company'}
                   </h3>
                   <div className="space-y-1">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-xs sm:text-sm text-gray-600">
                       <span className="font-medium">Role:</span> {membership.role}
                     </p>
                     {companyOwner && (
-                      <p className="text-sm text-gray-600">
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">
                         <span className="font-medium">CEO:</span> {companyOwner.full_name || companyOwner.email}
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex-shrink-0">
                   <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                   <p className="text-xs text-gray-500 mt-1">Active</p>
                 </div>
               </div>
             </Card>
           ) : (
-            <Alert variant="warning">
+            <Alert variant="warning" className="p-4 sm:p-6">
               <div>
-                <h4 className="font-semibold mb-2">Not a member of any company</h4>
+                <h4 className="font-semibold mb-2 text-sm sm:text-base">Not a member of any company</h4>
                 {pendingRequests.length > 0 ? (
-                  <p className="text-sm">
+                  <p className="text-xs sm:text-sm">
                     Pending request to join <strong>{pendingRequests[0].corp_companies?.name || 'a company'}</strong>
                   </p>
                 ) : (
-                  <p className="text-sm">
+                  <p className="text-xs sm:text-sm">
                     Use "Join Company" on the homepage to request joining.
                   </p>
                 )}
@@ -427,35 +439,33 @@ export default function EmployeeStatus() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mb-8"
+            className="mb-6 sm:mb-8"
           >
-            <Card>
-              <Card.Header>
-                <Card.Title>Update Your Status</Card.Title>
-                <p className="text-sm text-gray-600 mt-2">
+            <Card className="p-4 sm:p-6">
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Update Your Status</h2>
+                <p className="text-xs sm:text-sm text-gray-600">
                   Let your team know how you're doing today
                 </p>
-              </Card.Header>
+              </div>
               
-              <Card.Content>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {STATUS_TYPES.map((status, index) => (
-                    <motion.div
-                      key={status.key}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 + index * 0.1 }}
-                    >
-                      <StatusCard
-                        status={status.key}
-                        onClick={() => postStatus(status.key)}
-                        disabled={loading}
-                        loading={loading}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-              </Card.Content>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {STATUS_TYPES.map((status, index) => (
+                  <motion.div
+                    key={status.key}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + index * 0.1 }}
+                  >
+                    <StatusCard
+                      status={status.key}
+                      onClick={() => postStatus(status.key)}
+                      disabled={loading}
+                      loading={loading}
+                    />
+                  </motion.div>
+                ))}
+              </div>
             </Card>
           </motion.div>
         )}
@@ -476,62 +486,98 @@ export default function EmployeeStatus() {
           )}
         </AnimatePresence>
 
+        {/* Announcements */}
+        {membership && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mb-6 sm:mb-8"
+          >
+            <Announcements 
+              companyId={membership.company_id} 
+              userId={user?.id} 
+              userRole={membership.role} 
+            />
+          </motion.div>
+        )}
+
+        {/* Team Chat */}
+        {membership && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mb-6 sm:mb-8"
+          >
+            <Card className="p-4 sm:p-6">
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Team Communication</h2>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  Real-time chat with your team members
+                </p>
+              </div>
+              <RealTimeChat 
+                companyId={membership.company_id} 
+                userId={user?.id} 
+              />
+            </Card>
+          </motion.div>
+        )}
+
         {/* Status History */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.7 }}
         >
-          <Card>
-            <Card.Header>
-              <Card.Title>Recent Updates</Card.Title>
-              <p className="text-sm text-gray-600 mt-2">
+          <Card className="p-4 sm:p-6">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Recent Updates</h2>
+              <p className="text-xs sm:text-sm text-gray-600">
                 Your latest status updates and team activity
               </p>
-            </Card.Header>
+            </div>
             
-            <Card.Content>
-              {statuses.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-4xl mb-4">📝</div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No updates yet</h3>
-                  <p className="text-gray-600">Start by updating your status above</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {statuses.map((item, index) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">
-                          {(profile?.full_name || item.user_id || 'U').charAt(0).toUpperCase()}
+            {statuses.length === 0 ? (
+              <div className="text-center py-8 sm:py-12">
+                <div className="text-3xl sm:text-4xl mb-4">📝</div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">No updates yet</h3>
+                <p className="text-sm sm:text-base text-gray-600">Start by updating your status above</p>
+              </div>
+            ) : (
+              <div className="space-y-3 sm:space-y-4">
+                {statuses.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-xs sm:text-sm">
+                        {(profile?.full_name || item.user_id || 'U').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-1 sm:space-y-0">
+                        <span className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+                          {profile?.full_name || item.user_id}
+                        </span>
+                        <span className="text-xs sm:text-sm text-gray-500">
+                          {new Date(item.timestamp).toLocaleString()}
                         </span>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-semibold text-gray-900">
-                            {profile?.full_name || item.user_id}
-                          </span>
-                          <span className="text-sm text-gray-500">•</span>
-                          <span className="text-sm text-gray-500">
-                            {new Date(item.timestamp).toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="text-gray-700 mt-1">
-                          Status: <span className="font-medium capitalize">{item.type}</span>
-                          {item.message && <span> - {item.message}</span>}
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </Card.Content>
+                      <p className="text-xs sm:text-sm text-gray-700 mt-1">
+                        Status: <span className="font-medium capitalize">{item.type}</span>
+                        {item.message && <span> - {item.message}</span>}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </Card>
         </motion.div>
       </div>

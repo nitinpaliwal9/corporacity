@@ -1,7 +1,7 @@
-// Service Worker for Corporacity PWA
-const CACHE_NAME = 'corporacity-v1.0.0'
-const STATIC_CACHE = 'corporacity-static-v1.0.0'
-const DYNAMIC_CACHE = 'corporacity-dynamic-v1.0.0'
+// Service Worker for Corporacity PWA - Enhanced Mobile Features
+const CACHE_NAME = 'corporacity-v1.1.0'
+const STATIC_CACHE = 'corporacity-static-v1.1.0'
+const DYNAMIC_CACHE = 'corporacity-dynamic-v1.1.0'
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
